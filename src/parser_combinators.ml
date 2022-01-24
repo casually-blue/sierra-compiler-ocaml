@@ -99,3 +99,23 @@ let rec sepBy sep p s = match (p s) with
                         | Error e -> Error e)
                 | Error _ -> Ok (result :: [], rest))
         | Error e -> Error e
+
+let rec chainl1 (p: 'a parser_f) (op: ('a -> 'a -> 'a) parser_f) (s: string) = match (p s) with
+        | Ok (left, rest) -> (chain_rest p op left rest)
+        | Error e -> Error e
+and chain_rest p op a s = match (op s) with
+        | Ok (oper, rest) -> (match (p rest) with
+                        | Ok (right, rest) -> chain_rest p op (oper a right) rest
+                        | Error e -> Error e)
+        | Error _ -> Ok (a, s)
+
+
+
+
+
+
+
+
+
+
+
