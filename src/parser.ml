@@ -50,3 +50,5 @@ let many (p: 'parsed parser_f) (s: string) =
         match (many1 p s) with
                 | Error _ -> Ok ([], s)
                 | good -> good
+
+let match_digits = many1 match_digit
