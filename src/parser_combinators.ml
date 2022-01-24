@@ -67,4 +67,29 @@ let is_whitespace c = (c == ' ' || c == '\t' || c == '\n')
 let match_whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
 let skip_whitespace = parser_map match_whitespace (fun _ -> ())
 
+let rec seq ps (s: string) = match ps with
+        | [] -> Ok ([], s)
+        | p :: ps -> ( match (p s) with
+                | Ok (result, rest) -> ( match (seq ps rest) with
+                        | Ok (results, rest) -> Ok (result :: results, rest)
+                        | Error error -> Error error)
+                | Error error -> Error error
+        )
+
+let (<+>) p1 p2 s = match (p1 s) with
+        | Ok (result, rest) -> (match (p2 rest) with
+                | Ok (r2, rest) -> Ok ((result, r2), rest)
+                | Error error -> Error error)
+        | Error error -> Error error
+
+let integer = parse_number
+let identifier s = match ((match_alpha <+> (many match_alnum)) s) with
+        | Ok ((first, rest_ident), rest) -> Ok ((String.make 1 first) ^ (String.of_seq (List.to_seq rest_ident)), rest)
+        | Error error -> Error error
+
+
+
+
+
+
 
