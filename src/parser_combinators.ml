@@ -16,6 +16,8 @@ let match_char (f: char -> bool) (err: parser_error) (s: string) = match (get_ch
 		| false -> Error err)
 	| Error e -> Error e
 
+let charp c = match_char (fun ch -> c == ch) (ExpectationError (String.make 1 c))
+
 let isdigit c = c >= '0' && c <= '9'
 let isalpha c = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 
@@ -34,7 +36,6 @@ let rec one_of (ps: ('parsed parser_f) list) (s: string) =
                         )
                         | good -> good
                 )
-
 
 let match_alnum = one_of (match_digit :: match_alpha :: [])
 
@@ -84,3 +85,17 @@ let (<|>) p1 p2 s = match (p1 s) with
 let remove_whitespace p = parser_map (whitespace <+> p) (fun (_, r) -> r)
 let integer = parser_map match_digits (fun r -> (list_to_number r))
 let identifier =  parser_map (match_alpha <+> (many match_alnum)) (fun (first, rest) -> (String.make 1 first) ^ (String.of_seq (List.to_seq rest)))
+
+let keyword k s = match (identifier s) with
+        | Ok (result, rest) -> (match (String.equal k result ) with
+                | true -> Ok (k, rest)
+                | false -> Error (ExpectationError k))
+        | Error error -> Error error
+
+let rec sepBy sep p s = match (p s) with
+        | Ok (result, rest) -> (match (sep rest) with
+                | Ok (_, rest) -> (match (sepBy sep p rest) with
+                        | Ok (results, rest) -> Ok (result :: results, rest)
+                        | Error e -> Error e)
+                | Error _ -> Ok (result :: [], rest))
+        | Error e -> Error e
