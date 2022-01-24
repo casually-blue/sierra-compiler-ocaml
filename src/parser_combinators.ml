@@ -35,6 +35,7 @@ let rec one_of (ps: ('parsed parser_f) list) (s: string) =
                         | good -> good
                 )
 
+
 let match_alnum = one_of (match_digit :: match_alpha :: [])
 
 let rec many1 (p: 'parsed parser_f) (s: string) =
@@ -63,8 +64,8 @@ let parser_map (p: 'parsed parser_f) if_ok_func s = match (p s) with
         | Error error -> Error error
 
 let is_whitespace c = (c == ' ' || c == '\t' || c == '\n')
-let match_whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
-let skip_whitespace = parser_map match_whitespace (fun _ -> ())
+let whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
+
 
 let (<+>) p1 p2 s = match (p1 s) with
         | Ok (result, rest) -> (match (p2 rest) with
@@ -72,5 +73,14 @@ let (<+>) p1 p2 s = match (p1 s) with
                 | Error error -> Error error)
         | Error error -> Error error
 
+
+let (<|>) p1 p2 s = match (p1 s) with
+        | Error e1 -> (match (p2 s) with
+                | Error e2 -> Error (ListError [e1; e2])
+                | good -> good
+        )
+        | good -> good
+
+let remove_whitespace p = parser_map (whitespace <+> p) (fun (_, r) -> r)
 let integer = parser_map match_digits (fun r -> (list_to_number r))
 let identifier =  parser_map (match_alpha <+> (many match_alnum)) (fun (first, rest) -> (String.make 1 first) ^ (String.of_seq (List.to_seq rest)))
