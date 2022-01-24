@@ -9,14 +9,12 @@ let get_char (s: string): (char * string, parser_error) result = (match (String.
 	| 0 -> Error EndOfInputError
 	| _ -> Ok (String.get s 0, (String.sub s 1 ((String.length s) - 1))))
 
-let match_char f err = fun s -> (
-	match (get_char s) with
+let match_char (f: char -> bool) (err: parser_error) (s: string) = match (get_char s) with
 	| Ok (c, rest) -> (
 		match (f c) with
 		| true -> Ok (c, rest)
 		| false -> Error err)
 	| Error e -> Error e
-)
 
 let isdigit c = c >= '0' && c <= '9'
 let isalpha c = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
@@ -38,3 +36,17 @@ let rec one_of (ps: ('parsed parser_f) list) (s: string) =
                 )
 
 let match_alnum = one_of (match_digit :: match_alpha :: [])
+
+let rec many1 (p: 'parsed parser_f) (s: string) =
+        match (p s) with
+                | Ok (result, rest) -> (
+                        match (many1 p rest) with
+                                | Ok (results, rest) -> Ok (result :: results, rest)
+                                | Error _ -> Ok (result :: [], rest)
+                )
+                | Error error -> Error error
+
+let many (p: 'parsed parser_f) (s: string) =
+        match (many1 p s) with
+                | Error _ -> Ok ([], s)
+                | good -> good
