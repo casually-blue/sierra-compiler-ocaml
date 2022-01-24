@@ -52,3 +52,19 @@ let many (p: 'parsed parser_f) (s: string) =
                 | good -> good
 
 let match_digits = many1 match_digit
+let char_to_number c = (Char.code c) - (Char.code '0')
+let list_to_number l = List.fold_left 
+                                (fun x y -> (x * 10 + y )) 
+                                0 
+                                (List.map char_to_number l)
+
+let parser_map (p: 'parsed parser_f) if_ok_func s = match (p s) with
+        | Ok (result, rest) -> Ok (if_ok_func result, rest)
+        | Error error -> Error error
+
+let parse_number = parser_map match_digits (fun r -> (list_to_number r))
+let is_whitespace c = (c == ' ' || c == '\t' || c == '\n')
+let match_whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
+let skip_whitespace = parser_map match_whitespace (fun _ -> ())
+
+
