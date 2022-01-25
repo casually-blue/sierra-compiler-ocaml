@@ -27,14 +27,12 @@ let term_oper = times <|> divide
 let term = chainl1 number (parser_map term_oper binary)
 let expr = chainl1 term (parser_map expr_oper binary)
 
-let multi a b = a * b
-
 let rec eval (expression: expr): int = match expression with
         | Number a -> a
         | Binary (op,left,right) -> (match op with
                 | Plus -> (+)
                 | Minus -> (-)
-                | Times -> multi
+                | Times -> fun a b -> (a * b)
                 | Divide -> (/)) (eval left) (eval right)
 
 let () = while true do
@@ -43,5 +41,5 @@ let () = while true do
         print_string "Result: ";
         match (expr line) with
                 | Ok (e, _) -> print_int (eval e)
-                | _ -> ();
+                | _ -> print_endline "Error parse failed";
 done
