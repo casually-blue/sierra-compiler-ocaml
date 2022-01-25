@@ -10,36 +10,50 @@ type expr =
         | Binary of op * expr * expr
 
 let binary op left right = Binary (op, left, right)
+let number n = Number n
 
-let number = pmap_ok (remove_whitespace integer) (fun i rest -> Ok(Number i, rest))
+(* put a type constructor into a parse function *)
+let ok_construct con r rest = ok (con r) rest
 
-let ignore_ws_p p = remove_whitespace p
-let parse_op opc op = pmap_ok (ignore_ws_p (charp opc)) (fun _ rest -> Ok(op, rest))
+(* parse number *)
+let number = pmap_ok (remove_whitespace integer) (ok_construct number)
 
-let plus = parse_op '+' Plus
-let minus = parse_op '-' Minus
-let expr_oper = plus <|> minus
+(* parse a single-character operator *)
+let parse_op op_char op = pmap_ok (remove_whitespace (charp op_char)) (ok_ignore op)
 
-let times = parse_op '*' Times
-let divide = parse_op '/' Divide
-let term_oper = times <|> divide
+(* parse the correct operators for each type of operation *)
+let expr_oper = (parse_op '+' Plus) <|> (parse_op '-' Minus)
+let term_oper = (parse_op '*' Times) <|> (parse_op '/' Divide)
 
-let term = chainl1 number (pmap_ok term_oper (fun res rest -> ok (binary res) rest))
-let expr = chainl1 term (pmap_ok expr_oper (fun res rest -> ok (binary res) rest))
+(* left-associative parse expressions and terms *)
+let term = chainl1 number (pmap_ok term_oper (ok_construct binary))
+let expr = chainl1 term (pmap_ok expr_oper (ok_construct binary))
 
+(* recursively evaluate expressions *)
 let rec eval (expression: expr): int = match expression with
+        (* just give the value *)
         | Number a -> a
+        (* get a function to apply to the left and right values *)
         | Binary (op,left,right) -> (match op with
                 | Plus -> (+)
                 | Minus -> (-)
                 | Times -> fun a b -> (a * b)
-                | Divide -> (/)) (eval left) (eval right)
+                | Divide -> (/)) 
+        (* recurse *)
+        (eval left) (eval right)
 
+(* REPL *)
 let () = while true do
+        (* prompt for a line *)
         print_string ">> ";
         let line = read_line() in
+
+        (* print result *)
         print_string "Result: ";
+
+        (* Parse the line *)
         match (expr line) with
+                (* Eval *)
                 | Ok (e, _) -> print_int (eval e)
                 | _ -> print_endline "Error parse failed";
 done

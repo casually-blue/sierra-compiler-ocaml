@@ -12,6 +12,7 @@ let pmap (p: 'parsed parser_f) (left: 'parsed -> 'string -> 'b parser_result) (r
 
 let error e (_: string) = Error e
 let ok (res: 'a) (rest: string): 'a parser_result = Ok (res, rest)
+let ok_ignore (v: 'a) _ (rest: string) = Ok (v, rest)
 
 let pmap_ok p (left: 'a -> string -> 'parsed) = (pmap p left error)
 let pmap_error p right = (pmap p ok right)
