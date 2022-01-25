@@ -1,3 +1,3 @@
 (executable
  (name scc)
- (libraries src))
+ (libraries parser))

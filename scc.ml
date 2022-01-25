@@ -1,4 +1,4 @@
-open Src.Parser_combinators
+open Parser.Combinators
 type op = 
         | Plus
         | Minus
@@ -13,12 +13,35 @@ let binary op left right = Binary (op, left, right)
 
 let number = parser_map (remove_whitespace integer) (fun i -> Number i)
 
-let plus = (parser_map (remove_whitespace (charp '+')) (fun _ -> Plus))
-let minus = (parser_map (remove_whitespace (charp '-')) (fun _ -> Minus))
-let eoper = plus <|> minus
-let times = (parser_map (remove_whitespace (charp '*')) (fun _ -> Times))
-let divide = (parser_map (remove_whitespace (charp '/')) (fun _ -> Divide))
-let toper = times <|> divide
+let ignore_ws_p p = remove_whitespace p
+let parse_op opc op = parser_map (ignore_ws_p (charp opc)) (fun _ -> op)
 
-let term = chainl1 number (parser_map toper binary)
-let expr = chainl1 term (parser_map eoper binary)
+let plus = parse_op '+' Plus
+let minus = parse_op '-' Minus
+let expr_oper = plus <|> minus
+
+let times = parse_op '*' Times
+let divide = parse_op '/' Divide
+let term_oper = times <|> divide
+
+let term = chainl1 number (parser_map term_oper binary)
+let expr = chainl1 term (parser_map expr_oper binary)
+
+let multi a b = a * b
+
+let rec eval (expression: expr): int = match expression with
+        | Number a -> a
+        | Binary (op,left,right) -> (match op with
+                | Plus -> (+)
+                | Minus -> (-)
+                | Times -> multi
+                | Divide -> (/)) (eval left) (eval right)
+
+let () = while true do
+        print_string ">> ";
+        let line = read_line() in
+        print_string "Result: ";
+        match (expr line) with
+                | Ok (e, _) -> print_int (eval e)
+                | _ -> ();
+done
