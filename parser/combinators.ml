@@ -63,18 +63,21 @@ let (<|>) p1 p2 = pmap_error p1
         (fun e1 input -> pmap_error p2
                 (fun e2 _ -> Error (ListError [e1; e2])) input)
 
+(* execute a parser repeatedly with another parser in between each instance *)
 let rec sepBy sep p = pmap_ok p
         (fun result rest -> pmap sep
                 (fun _ rest -> pmap_ok (sepBy sep p)
                         (fun results rest -> ok (result :: results) rest) rest)
                 (fun _ input -> ok (result :: []) input) rest)
 
+(* left-associatively run a parser with an op *)
 let rec chainl1 p op = pmap_ok p (fun r rest -> chain_rest p op r rest)
 and chain_rest p op a = pmap op
         (fun oper rest -> pmap_ok p 
                 (fun right rest -> chain_rest p op (oper a right) rest) rest)
         (fun _ input -> ok a input)
 
+(* right-associatively run a parser with an op *)
 let rec chainr1 p op = pmap_ok p
         (fun left rest -> pmap op
                 (fun oper rest -> pmap_ok (chainr1 p op)
