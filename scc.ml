@@ -1,4 +1,6 @@
 open Parser.Combinators
+open Parser.Basic
+
 type op = 
         | Plus
         | Minus
@@ -11,10 +13,6 @@ type expr =
 
 let binary op left right = Binary (op, left, right)
 let number n = Number n
-
-(* put a type constructor into a parse function *)
-let ok_construct con r rest = ok (con r) rest
-
 (* parse number *)
 let number = pmap_ok (remove_whitespace integer) (ok_construct number)
 

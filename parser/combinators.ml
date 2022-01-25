@@ -3,50 +3,46 @@ type parser_error =
         | EndOfInputError
         | ListError of parser_error list
 
+(* a parser result of either a value and the rest of the input or a parser error *)
 type 'parsed parser_result = ('parsed * string, parser_error) result
 type 'parsed parser_f = string -> 'parsed parser_result
 
-let pmap (p: 'parsed parser_f) (left: 'parsed -> 'string -> 'b parser_result) (right: 'e -> 'string -> 'f parser_result) (s: string) = match (p s) with
+(* type constructors for parser results *)
+let error e _ = Error e
+let ok r rest = Ok (r, rest)
+
+(* put a type constructor into a parse function *)
+let ok_construct con r rest = ok (con r) rest
+
+(* ignore the returned result and substitute it with your own *)
+let ok_ignore v _ rest = Ok (v, rest)
+
+(* map two functions onto the results of a parser *)
+let pmap p left right s = match (p s) with
         | Ok (result, rest) -> left result rest
         | Error e -> right e s
 
-let error e (_: string) = Error e
-let ok (res: 'a) (rest: string): 'a parser_result = Ok (res, rest)
-let ok_ignore (v: 'a) _ (rest: string) = Ok (v, rest)
 
-let pmap_ok p (left: 'a -> string -> 'parsed) = (pmap p left error)
+(* carry the value through if it is an error and execute the function if it isnt *)
+let pmap_ok p left = (pmap p left error)
+(* carry the value through if it isn't an error and execute if it is *)
 let pmap_error p right = (pmap p ok right)
 
+(* get a char from the string or error if at end *)
 let get_char (s: string): (char * string, parser_error) result = (match (String.length s) with
         | 0 -> Error EndOfInputError
         | _ -> Ok (String.get s 0, (String.sub s 1 ((String.length s) - 1))))
 
-let match_char (f: char -> bool) (err: parser_error) (s: string) = match (get_char s) with
-        | Ok (c, rest) -> (
-                match (f c) with
-                | true -> Ok (c, rest)
-                | false -> Error err)
-        | Error e -> Error e
+(* check if a character from the input matches a predicate *)
+let match_char f e = pmap_ok get_char
+        (fun r rest -> match (f r) with
+                | true -> ok r rest
+                | false -> Error e)
 
+(* parse a single specific character *)
 let charp c = match_char (fun ch -> c == ch) (ExpectationError (String.make 1 c))
 
-let isdigit c = c >= '0' && c <= '9'
-let isalpha c = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-
-let match_digit = match_char isdigit (ExpectationError "digit")
-
-let match_alpha = match_char isalpha (ExpectationError "alphabetic character")
-
-let rec one_of (ps: ('parsed parser_f) list) (s: string) =
-        match ps with
-                | [] -> Error (ListError [])
-                | p :: prest -> (match (p s) with 
-                        | Error e -> (match (one_of prest s) with
-                                | Error ListError errs -> Error (ListError (e :: errs))
-                                | good -> good)
-                        | good -> good)
-
-let match_alnum = one_of (match_digit :: match_alpha :: [])
+(* repeat a given parser at least once *)
 let rec many1 (p: 'parsed parser_f) = pmap_ok p 
         (fun r rest -> ( pmap (many1 p) 
                 (fun results rest -> Ok (r :: results, rest))
@@ -54,72 +50,33 @@ let rec many1 (p: 'parsed parser_f) = pmap_ok p
                 rest))
 
 
-let many (p: 'parsed parser_f) = pmap_error (many1 p) (fun _ input -> Ok ([], input))
+(* repeat a given parser *)
+let many (p: 'parsed parser_f) = pmap_error (many1 p) (ok_ignore [])
 
-let match_digits = many1 match_digit
-let char_to_number c = (Char.code c) - (Char.code '0')
-let list_to_number l = List.fold_left 
-                                (fun x y -> (x * 10 + y )) 
-                                0 
-                                (List.map char_to_number l)
+(* chain two parsers together *)
+let (<+>) p1 p2 = pmap_ok p1 
+        (fun r1 rest -> pmap_ok p2
+                (fun r2 rest -> ok (r1,r2) rest) rest)
 
-let is_whitespace c = (c == ' ' || c == '\t' || c == '\n')
-let whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
+(* execute one parser and if it fails execute the second on the same input *)
+let (<|>) p1 p2 = pmap_error p1
+        (fun e1 input -> pmap_error p2
+                (fun e2 _ -> Error (ListError [e1; e2])) input)
 
+let rec sepBy sep p = pmap_ok p
+        (fun result rest -> pmap sep
+                (fun _ rest -> pmap_ok (sepBy sep p)
+                        (fun results rest -> ok (result :: results) rest) rest)
+                (fun _ input -> ok (result :: []) input) rest)
 
-let (<+>) p1 p2 s = match (p1 s) with
-        | Ok (result, rest) -> (match (p2 rest) with
-                | Ok (r2, rest) -> Ok ((result, r2), rest)
-                | Error error -> Error error)
-        | Error error -> Error error
+let rec chainl1 p op = pmap_ok p (fun r rest -> chain_rest p op r rest)
+and chain_rest p op a = pmap op
+        (fun oper rest -> pmap_ok p 
+                (fun right rest -> chain_rest p op (oper a right) rest) rest)
+        (fun _ input -> ok a input)
 
-
-let (<|>) p1 p2 s = match (p1 s) with
-        | Error e1 -> (match (p2 s) with
-                | Error e2 -> Error (ListError [e1; e2])
-                | good -> good)
-        | good -> good
-
-let remove_whitespace p = pmap_ok
-        (whitespace <+> p) 
-        (fun (_, result) rest -> Ok(result, rest)) 
-
-let integer = pmap_ok
-        match_digits 
-        (fun r rest -> Ok(list_to_number r, rest)) 
-
-let identifier = pmap_ok
-        (match_alpha <+> (many match_alnum))
-        (fun (first,rest) input -> Ok ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)), input))
-
-let keyword k = pmap_ok
-        identifier
-        (fun ident rest -> (match (String.equal k ident) with
-                                | true -> Ok (k, rest)
-                                | false -> Error (ExpectationError k)))
-
-let rec sepBy sep p s = match (p s) with
-        | Ok (result, rest) -> (match (sep rest) with
-                | Ok (_, rest) -> (match (sepBy sep p rest) with
-                        | Ok (results, rest) -> Ok (result :: results, rest)
-                        | Error e -> Error e)
-                | Error _ -> Ok (result :: [], rest))
-        | Error e -> Error e
-
-let rec chainl1 (p: 'a parser_f) (op: ('a -> 'a -> 'a) parser_f) (s: string) = match (p s) with
-        | Ok (left, rest) -> (chain_rest p op left rest)
-        | Error e -> Error e
-and chain_rest p op a s = match (op s) with
-        | Ok (oper, rest) -> (match (p rest) with
-                        | Ok (right, rest) -> chain_rest p op (oper a right) rest
-                        | Error e -> Error e)
-        | Error _ -> Ok (a, s)
-
-let rec chainr1 (p: 'a parser_f) (op: ('a -> 'a -> 'a) parser_f) (s: string) = match (p s) with
-        | Ok (left, rest) -> (match (op rest) with
-                | Ok (oper, rest) -> (match (chainr1 p op rest) with
-                        | Ok (right, rest) -> Ok (oper left right, rest)
-                        | Error e -> Error e)
-                | Error _ -> Ok (left, rest))
-        | Error e -> Error e
-
+let rec chainr1 p op = pmap_ok p
+        (fun left rest -> pmap op
+                (fun oper rest -> pmap_ok (chainr1 p op)
+                        (fun right rest -> Ok (oper left right, rest)) rest)
+                (fun _ input -> Ok (left, input)) rest)
