@@ -11,10 +11,10 @@ type expr =
 
 let binary op left right = Binary (op, left, right)
 
-let number = parser_map (remove_whitespace integer) (fun i -> Number i)
+let number = pmap_ok (remove_whitespace integer) (fun i rest -> Ok(Number i, rest))
 
 let ignore_ws_p p = remove_whitespace p
-let parse_op opc op = parser_map (ignore_ws_p (charp opc)) (fun _ -> op)
+let parse_op opc op = pmap_ok (ignore_ws_p (charp opc)) (fun _ rest -> Ok(op, rest))
 
 let plus = parse_op '+' Plus
 let minus = parse_op '-' Minus
@@ -24,8 +24,8 @@ let times = parse_op '*' Times
 let divide = parse_op '/' Divide
 let term_oper = times <|> divide
 
-let term = chainl1 number (parser_map term_oper binary)
-let expr = chainl1 term (parser_map expr_oper binary)
+let term = chainl1 number (pmap_ok term_oper (fun res rest -> ok (binary res) rest))
+let expr = chainl1 term (pmap_ok expr_oper (fun res rest -> ok (binary res) rest))
 
 let rec eval (expression: expr): int = match expression with
         | Number a -> a

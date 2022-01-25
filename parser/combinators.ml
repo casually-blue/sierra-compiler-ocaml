@@ -3,7 +3,18 @@ type parser_error =
         | EndOfInputError
         | ListError of parser_error list
 
-type 'parsed parser_f = string -> ('parsed * string, parser_error) result
+type 'parsed parser_result = ('parsed * string, parser_error) result
+type 'parsed parser_f = string -> 'parsed parser_result
+
+let pmap (p: 'parsed parser_f) (left: 'parsed -> 'string -> 'b parser_result) (right: 'e -> 'string -> 'f parser_result) (s: string) = match (p s) with
+        | Ok (result, rest) -> left result rest
+        | Error e -> right e s
+
+let error e (_: string) = Error e
+let ok (res: 'a) (rest: string): 'a parser_result = Ok (res, rest)
+
+let pmap_ok p (left: 'a -> string -> 'parsed) = (pmap p left error)
+let pmap_error p right = (pmap p ok right)
 
 let get_char (s: string): (char * string, parser_error) result = (match (String.length s) with
         | 0 -> Error EndOfInputError
@@ -35,18 +46,14 @@ let rec one_of (ps: ('parsed parser_f) list) (s: string) =
                         | good -> good)
 
 let match_alnum = one_of (match_digit :: match_alpha :: [])
+let rec many1 (p: 'parsed parser_f) = pmap_ok p 
+        (fun r rest -> ( pmap (many1 p) 
+                (fun results rest -> Ok (r :: results, rest))
+                (fun _ rest -> Ok (r :: [], rest)) 
+                rest))
 
-let rec many1 (p: 'parsed parser_f) (s: string) =
-        match (p s) with
-                | Ok (result, rest) -> (match (many1 p rest) with
-                                | Ok (results, rest) -> Ok (result :: results, rest)
-                                | Error _ -> Ok (result :: [], rest))
-                | Error error -> Error error
 
-let many (p: 'parsed parser_f) (s: string) =
-        match (many1 p s) with
-                | Error _ -> Ok ([], s)
-                | good -> good
+let many (p: 'parsed parser_f) = pmap_error (many1 p) (fun _ input -> Ok ([], input))
 
 let match_digits = many1 match_digit
 let char_to_number c = (Char.code c) - (Char.code '0')
@@ -54,10 +61,6 @@ let list_to_number l = List.fold_left
                                 (fun x y -> (x * 10 + y )) 
                                 0 
                                 (List.map char_to_number l)
-
-let parser_map (p: 'parsed parser_f) if_ok_func s = match (p s) with
-        | Ok (result, rest) -> Ok (if_ok_func result, rest)
-        | Error error -> Error error
 
 let is_whitespace c = (c == ' ' || c == '\t' || c == '\n')
 let whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
@@ -76,15 +79,23 @@ let (<|>) p1 p2 s = match (p1 s) with
                 | good -> good)
         | good -> good
 
-let remove_whitespace p = parser_map (whitespace <+> p) (fun (_, r) -> r)
-let integer = parser_map match_digits (fun r -> (list_to_number r))
-let identifier =  parser_map (match_alpha <+> (many match_alnum)) (fun (first, rest) -> (String.make 1 first) ^ (String.of_seq (List.to_seq rest)))
+let remove_whitespace p = pmap_ok
+        (whitespace <+> p) 
+        (fun (_, result) rest -> Ok(result, rest)) 
 
-let keyword k s = match (identifier s) with
-        | Ok (result, rest) -> (match (String.equal k result ) with
-                | true -> Ok (k, rest)
-                | false -> Error (ExpectationError k))
-        | Error error -> Error error
+let integer = pmap_ok
+        match_digits 
+        (fun r rest -> Ok(list_to_number r, rest)) 
+
+let identifier = pmap_ok
+        (match_alpha <+> (many match_alnum))
+        (fun (first,rest) input -> Ok ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)), input))
+
+let keyword k = pmap_ok
+        identifier
+        (fun ident rest -> (match (String.equal k ident) with
+                                | true -> Ok (k, rest)
+                                | false -> Error (ExpectationError k)))
 
 let rec sepBy sep p s = match (p s) with
         | Ok (result, rest) -> (match (sep rest) with
@@ -110,3 +121,4 @@ let rec chainr1 (p: 'a parser_f) (op: ('a -> 'a -> 'a) parser_f) (s: string) = m
                         | Error e -> Error e)
                 | Error _ -> Ok (left, rest))
         | Error e -> Error e
+
