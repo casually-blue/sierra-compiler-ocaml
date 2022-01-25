@@ -18,28 +18,34 @@ let match_alnum_ = match_digit <|> match_alpha <|> (charp '_')
 
 
 let whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
+
+(* execute a parser after ignoring whitespace *)
 let remove_whitespace p = pmap_ok
         (whitespace <+> p) 
         (fun (_, result) rest -> Ok(result, rest)) 
 
+(* convert a char representation of a digit to the digit itself *)
 let char_to_number c = (Char.code c) - (Char.code '0')
+
+(* fold a list of numbers into a single number *)
 let list_to_number l = List.fold_left 
                                 (fun x y -> (x * 10 + y )) 
                                 0 
                                 (List.map char_to_number l)
 
+
 let integer = pmap_ok
         match_digits 
-        (fun r rest -> Ok(list_to_number r, rest)) 
+        (ok_construct list_to_number)
 
 let identifier = pmap_ok
         (match_alpha <+> (many match_alnum))
-        (fun (first,rest) input -> ok ((String.make 1 first) ^ (String.of_seq (List.to_seq rest))) input)
+        (ok_construct (
+                fun (first, rest) -> ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)))))
 
+(* match a keyword *)
 let keyword k = pmap_ok
         identifier
         (fun ident rest -> (match (String.equal k ident) with
                                 | true -> ok k rest
                                 | false -> Error (ExpectationError k)))
-
-
