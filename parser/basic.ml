@@ -1,16 +1,22 @@
 open Combinators
 
+(* boolean functions to check for character set membership *)
 let isdigit c = c >= '0' && c <= '9'
 let isalpha c = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+let is_whitespace c = (c == ' ' || c == '\t' || c == '\n')
 
+(* check for a single digit *)
 let match_digit = match_char isdigit (ExpectationError "digit")
+(* match at least one digit *)
 let match_digits = many1 match_digit
 
+(* match a single character *)
 let match_alpha = match_char isalpha (ExpectationError "alphabetic character")
+(* match either a digit or a alphabetic character *)
 let match_alnum = match_digit <|> match_alpha
+let match_alnum_ = match_digit <|> match_alpha <|> (charp '_')
 
 
-let is_whitespace c = (c == ' ' || c == '\t' || c == '\n')
 let whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
 let remove_whitespace p = pmap_ok
         (whitespace <+> p) 
