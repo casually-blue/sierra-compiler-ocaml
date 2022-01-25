@@ -94,7 +94,7 @@ let rec sepBy sep p s = match (p s) with
                 | Error _ -> Ok (result :: [], rest))
         | Error e -> Error e
 
-let rec chainl1 (p: 'a parser_f) (op: ('a -> 'b -> 'c) parser_f) (s: string) = match (p s) with
+let rec chainl1 (p: 'a parser_f) (op: ('a -> 'a -> 'a) parser_f) (s: string) = match (p s) with
         | Ok (left, rest) -> (chain_rest p op left rest)
         | Error e -> Error e
 and chain_rest p op a s = match (op s) with
@@ -103,7 +103,7 @@ and chain_rest p op a s = match (op s) with
                         | Error e -> Error e)
         | Error _ -> Ok (a, s)
 
-let rec chainr1 (p: 'a parser_f) (op: ('a -> 'b -> 'c) parser_f) (s: string) = match (p s) with
+let rec chainr1 (p: 'a parser_f) (op: ('a -> 'a -> 'a) parser_f) (s: string) = match (p s) with
         | Ok (left, rest) -> (match (op rest) with
                 | Ok (oper, rest) -> (match (chainr1 p op rest) with
                         | Ok (right, rest) -> Ok (oper left right, rest)
