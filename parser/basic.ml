@@ -34,12 +34,12 @@ let integer = pmap_ok
 
 let identifier = pmap_ok
         (match_alpha <+> (many match_alnum))
-        (fun (first,rest) input -> Ok ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)), input))
+        (fun (first,rest) input -> ok ((String.make 1 first) ^ (String.of_seq (List.to_seq rest))) input)
 
 let keyword k = pmap_ok
         identifier
         (fun ident rest -> (match (String.equal k ident) with
-                                | true -> Ok (k, rest)
+                                | true -> ok k rest
                                 | false -> Error (ExpectationError k)))
 
 
