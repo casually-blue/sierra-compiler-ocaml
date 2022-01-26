@@ -22,18 +22,18 @@ let stmt_expr exp = Expression exp
 let binding s exp = Binding (s,exp)
 
 (* parse number *)
-let number = pmap_ok (remove_whitespace integer) (ok_construct number)
+let number = pmap_ok integer (ok_construct number)
 
 (* parse a single-character operator *)
-let parse_op op_char op = pmap_ok (remove_whitespace (charp op_char)) (ok_ignore op)
+let parse_op op_char op = pmap_ok (charp op_char) (ok_ignore op)
 
 (* parse the correct operators for each type of operation *)
 let expr_oper = (parse_op '+' Plus) <|> (parse_op '-' Minus)
 let term_oper = (parse_op '*' Times) <|> (parse_op '/' Divide)
 
 (* left-associative parse expressions and terms *)
-let term = chainl1 number (pmap_ok term_oper (ok_construct binary))
-let expr = chainl1 term (pmap_ok expr_oper (ok_construct binary))
+let term = chainl1 (remove_whitespace number) (pmap_ok (remove_whitespace term_oper) (ok_construct binary))
+let expr = chainl1 (remove_whitespace term) (pmap_ok (remove_whitespace expr_oper) (ok_construct binary))
 
 let binding = pmap_ok
                 ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expr)
