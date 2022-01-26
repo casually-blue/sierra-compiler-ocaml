@@ -1,8 +1,6 @@
 open Parser.Combinators
 open Parser.Basic
 
-open Batteries
-
 type op = 
         | Plus
         | Minus
@@ -41,21 +39,21 @@ let stmt =
         (pmap_ok
                 (
                         (remove_whitespace (keyword "let")) 
-                        <+> (remove_whitespace identifier) 
-                        <+> (remove_whitespace (charp '=')) 
-                        <+> (remove_whitespace expr) 
-                        <+> (remove_whitespace (charp ';')) 
+                        <-+> identifier
+                        <-+> (charp '=')
+                        <-+> expr
+                        <-+> (charp ';')
                         )
                 (fun ((((_, name),_), exp), _) rest -> Ok (binding name exp, rest))
                 ) 
         <|> (pmap_ok
                 (
                         (remove_whitespace expr) 
-                        <+> (remove_whitespace (charp ';')))
+                        <-+> (charp ';'))
                 (fun (exp, _) rest -> Ok (stmt_expr exp, rest))
                 )
 
-        (* recursively evaluate expressions *)
+(* recursively evaluate expressions *)
 let rec eval (expression: expr): int = match expression with
         (* just give the value *)
         | Number a -> a
@@ -69,7 +67,7 @@ let rec eval (expression: expr): int = match expression with
         (eval left) (eval right)
 
 
-        (* REPL *)
+(* REPL *)
 let () = let exiting = ref false in while (not !exiting) do
         (* prompt for a line *)
         print_string ">> ";
@@ -77,16 +75,18 @@ let () = let exiting = ref false in while (not !exiting) do
                 End_of_file -> None
         ) in
 
+        (* parse the line *)
         match line with
         | Some line -> (
                 (* Parse the line *)
-                match ((stmt <+> (remove_whitespace eof)) line) with
-                (* Eval *)
+                match ((stmt <-+> eof) line) with
+                (* Eval, throwing away the rest of input and the eof which got parsed *)
                 | Ok ((s, ()), _) -> (match s with
                         | Binding (name, exp) ->
                                         print_string ("Result: " ^ name ^ " = ") ; print_int (eval exp)
                         | Expression exp -> print_string "Result: " ; print_int (eval exp); print_endline ""
                         )
+                        (* if there is an error just print it out *)
                         | Error err -> print_endline ("Error parse failed:" ^ (stringify_parser_error err));)
         | None -> exiting := true
 done

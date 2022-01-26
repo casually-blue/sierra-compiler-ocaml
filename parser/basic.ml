@@ -23,6 +23,8 @@ let remove_whitespace p = pmap_ok
         (whitespace <+> p) 
         (fun (_, result) rest -> Ok(result, rest)) 
 
+let (<-+>) p1 p2 = p1 <+> (remove_whitespace p2)
+
 (* convert a char representation of a digit to the digit itself *)
 let char_to_number c = (Char.code c) - (Char.code '0')
 
