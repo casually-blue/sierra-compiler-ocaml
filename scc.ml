@@ -35,20 +35,15 @@ let term_oper = (parse_op '*' Times) <|> (parse_op '/' Divide)
 let term = chainl1 number (pmap_ok term_oper (ok_construct binary))
 let expr = chainl1 term (pmap_ok expr_oper (ok_construct binary))
 
-let stmt = (pmap_ok 
-        (pmap_ok
-                (
-                        (remove_whitespace (keyword "let")) 
-                        <-+> identifier
-                        <-+> (charp '=')
-                        <-+> expr
-                )
+let binding = pmap_ok
+                ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expr)
                 (fun (((_, name),_), exp) rest -> Ok (binding name exp, rest))
-        <|> (pmap_ok
-                (remove_whitespace expr)
-                (fun exp rest -> Ok (stmt_expr exp, rest)))
-        <-+> (charp ';'))
-        (fun (exp, _) rest -> Ok (exp, rest)))
+
+let bare_expression = pmap_ok expr (ok_construct stmt_expr)
+
+let stmt = pmap_ok 
+        ((binding <|> bare_expression) <-+> (charp ';'))
+        (fun (exp, _) rest -> Ok (exp, rest))
 
 
 (* recursively evaluate expressions *)
@@ -77,7 +72,7 @@ let () = let exiting = ref false in while (not !exiting) do
         match line with
         | Some line -> (
                 (* Parse the line *)
-                match ((stmt <-+> eof) line) with
+                match ((remove_whitespace (stmt <-+> eof)) line) with
                 (* Eval, throwing away the rest of input and the eof which got parsed *)
                 | Ok ((s, ()), _) -> (match s with
                         | Binding (name, exp) ->
