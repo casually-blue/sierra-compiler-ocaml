@@ -39,14 +39,17 @@ let integer = pmap_ok
         (ok_construct char_list_to_number)
 
 (* match an identifier that contains aphanumeric characters and possibly underscores *)
-let identifier = pmap_ok
+let identifier = pmap
         ((match_alpha <|> (charp '_')) <+> (many (match_alnum <|> (charp '_'))))
         (ok_construct (
                 fun (first, rest) -> ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)))))
+        (fun _ _ -> Error (ExpectationError "identifier"))
 
 (* match a keyword *)
-let keyword k = pmap_ok
+let keyword k = pmap
         identifier
         (fun ident rest -> (match (String.equal k ident) with
                                 | true -> ok k rest
-                                | false -> Error (ExpectationError k)))
+                                | false -> Error (ExpectationError ("keyword: " ^ k))))
+        (fun _ _ -> Error (ExpectationError ("keyword: " ^ k)))
+

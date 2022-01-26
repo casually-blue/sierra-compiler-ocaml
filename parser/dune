@@ -1,2 +1,3 @@
 (library
-  (name parser))
+  (name parser)
+  (libraries batteries))

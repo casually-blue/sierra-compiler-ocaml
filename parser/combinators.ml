@@ -1,7 +1,13 @@
+open Batteries 
 type parser_error = 
         | ExpectationError of string
         | EndOfInputError
-        | ListError of parser_error list
+        | ListError of parser_error * parser_error
+
+let rec stringify_parser_error e = match e with
+        | ExpectationError s -> "Expected: " ^ s
+        | EndOfInputError -> "Expected a character, got EOF"
+        | ListError (e1, e2) -> "Either " ^ (stringify_parser_error e1) ^ " or " ^ (stringify_parser_error e2)
 
 (* a parser result of either a value and the rest of the input or a parser error *)
 type 'parsed parser_result = ('parsed * string, parser_error) result
@@ -61,7 +67,12 @@ let (<+>) p1 p2 = pmap_ok p1
 (* execute one parser and if it fails execute the second on the same input *)
 let (<|>) p1 p2 = pmap_error p1
         (fun e1 input -> pmap_error p2
-                (fun e2 _ -> Error (ListError [e1; e2])) input)
+                (fun e2 _ -> match (e1, e2) with
+                        | (ExpectationError e1, ExpectationError e2) -> Error (ExpectationError (e1 ^ " or " ^ e2))
+                        | (ExpectationError e1, _) -> Error (ExpectationError e1)
+                        | (_, ExpectationError e2) -> Error (ExpectationError e2)
+                        | (e1, e2) -> Error (ListError (e1, e2)))
+                input)
 
 (* execute a parser repeatedly with another parser in between each instance *)
 let rec sepBy sep p = pmap_ok p
@@ -83,3 +94,8 @@ let rec chainr1 p op = pmap_ok p
                 (fun oper rest -> pmap_ok (chainr1 p op)
                         (fun right rest -> Ok (oper left right, rest)) rest)
                 (fun _ input -> Ok (left, input)) rest)
+
+(* maybe apply a parser to input *)
+let maybe p = pmap p
+        (fun r rest -> Ok(Some r, rest))
+        (fun _ input -> Ok(None, input))

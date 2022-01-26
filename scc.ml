@@ -1,6 +1,8 @@
 open Parser.Combinators
 open Parser.Basic
 
+open Batteries
+
 type op = 
         | Plus
         | Minus
@@ -78,5 +80,5 @@ let () = while true do
                                print_string (name ^ " = ") ; print_int (eval exp)
                         | Expression exp -> print_int (eval exp); print_endline ""
                 )
-                | _ -> print_endline "Error parse failed";
+                | Error err -> print_endline ("Error parse failed:" ^ (stringify_parser_error err));
 done
