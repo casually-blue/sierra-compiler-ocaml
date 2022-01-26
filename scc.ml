@@ -31,9 +31,11 @@ let parse_op op_char op = pmap_ok (charp op_char) (ok_ignore op)
 let expr_oper = (parse_op '+' Plus) <|> (parse_op '-' Minus)
 let term_oper = (parse_op '*' Times) <|> (parse_op '/' Divide)
 
+let binary_op term op ctor = chainl1 (remove_whitespace term) (pmap_ok (remove_whitespace op) (ok_construct ctor))
+
 (* left-associative parse expressions and terms *)
-let term = chainl1 (remove_whitespace number) (pmap_ok (remove_whitespace term_oper) (ok_construct binary))
-let expr = chainl1 (remove_whitespace term) (pmap_ok (remove_whitespace expr_oper) (ok_construct binary))
+let term = binary_op number term_oper binary
+let expr = binary_op term expr_oper binary
 
 let binding = pmap_ok
                 ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expr)
