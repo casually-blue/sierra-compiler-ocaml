@@ -82,6 +82,6 @@ let () = let exiting = ref false in while (not !exiting) do
                         | Expression exp -> print_string "Result: " ; print_int (eval exp); print_endline ""
                         )
                 (* if there is an error just print it out *)
-                        | Error err -> print_endline ("Error parse failed:" ^ (stringify_parser_error err));)
+                        | Error (err, input) -> print_endline ("Error parse failed:" ^ (stringify_parser_error err) ^ " (" ^ input ^ ")");)
         | None -> exiting := true
 done

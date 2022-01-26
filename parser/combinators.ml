@@ -10,11 +10,11 @@ let rec stringify_parser_error e = match e with
         | ListError (e1, e2) -> "Either " ^ (stringify_parser_error e1) ^ " or " ^ (stringify_parser_error e2)
 
 (* a parser result of either a value and the rest of the input or a parser error *)
-type 'parsed parser_result = ('parsed * string, parser_error) result
+type 'parsed parser_result = ('parsed * string, parser_error * string) result
 type 'parsed parser_f = string -> 'parsed parser_result
 
 (* type constructors for parser results *)
-let error e _ = Error e
+let error e input = Error (e, input)
 let ok r rest = Ok (r, rest)
 
 (* put a type constructor into a parse function *)
@@ -26,7 +26,7 @@ let ok_ignore v _ rest = Ok (v, rest)
 (* map two functions onto the results of a parser *)
 let pmap p left right s = match (p s) with
         | Ok (result, rest) -> left result rest
-        | Error e -> right e s
+        | Error (e, _) -> right e s
 
 
 (* carry the value through if it is an error and execute the function if it isnt *)
@@ -35,18 +35,18 @@ let pmap_ok p left = (pmap p left error)
 let pmap_error p right = (pmap p ok right)
 
 (* get a char from the string or error if at end *)
-let get_char (s: string): (char * string, parser_error) result = (match (String.length s) with
-        | 0 -> Error EndOfInputError
+let get_char s = (match (String.length s) with
+        | 0 -> Error (EndOfInputError, s)
         | _ -> Ok (String.get s 0, (String.sub s 1 ((String.length s) - 1))))
 
 (* check if a character from the input matches a predicate *)
 let match_char f e = pmap_ok get_char
         (fun r rest -> match (f r) with
                 | true -> ok r rest
-                | false -> Error e)
+                | false -> (error e rest))
 
 let eof = pmap get_char
-        (fun _ _ -> Error (ExpectationError "end of input"))
+        (fun _ input -> Error (ExpectationError "end of input", input))
         (fun _ input -> Ok ((), input))
 
 
@@ -72,11 +72,11 @@ let (<+>) p1 p2 = pmap_ok p1
 (* execute one parser and if it fails execute the second on the same input *)
 let (<|>) p1 p2 = pmap_error p1
         (fun e1 input -> pmap_error p2
-                (fun e2 _ -> match (e1, e2) with
-                        | (ExpectationError e1, ExpectationError e2) -> Error (ExpectationError (e1 ^ " or " ^ e2))
-                        | (ExpectationError e1, _) -> Error (ExpectationError e1)
-                        | (_, ExpectationError e2) -> Error (ExpectationError e2)
-                        | (e1, e2) -> Error (ListError (e1, e2)))
+                ((fun e2 rest -> match (e1, e2) with
+                        | (ExpectationError e1, ExpectationError e2) -> error (ExpectationError (e1 ^ " or " ^ e2)) rest
+                        | (ExpectationError e1, _) -> error (ExpectationError e1) rest
+                        | (_, ExpectationError e2) -> error (ExpectationError e2) rest
+                        | (e1, e2) -> error (ListError (e1, e2)) rest))
                 input)
 
 (* execute a parser repeatedly with another parser in between each instance *)

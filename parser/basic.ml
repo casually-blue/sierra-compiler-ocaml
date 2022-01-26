@@ -45,13 +45,13 @@ let identifier = pmap
         ((match_alpha <|> (charp '_')) <+> (many (match_alnum <|> (charp '_'))))
         (ok_construct (
                 fun (first, rest) -> ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)))))
-        (fun _ _ -> Error (ExpectationError "identifier"))
+        (fun _ input -> Error (ExpectationError "identifier", input))
 
 (* match a keyword *)
 let keyword k = pmap
         identifier
         (fun ident rest -> (match (String.equal k ident) with
                                 | true -> ok k rest
-                                | false -> Error (ExpectationError ("keyword: " ^ k))))
-        (fun _ _ -> Error (ExpectationError ("keyword: " ^ k)))
+                                | false -> error (ExpectationError ("keyword: " ^ k)) rest))
+        (fun _ input -> error (ExpectationError ("keyword: " ^ k)) input)
 
