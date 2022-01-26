@@ -16,7 +16,10 @@ let pmap (p: 'parsed parser_f) left right s = match (p s) with
 (* carry the value through if it is an error and execute the function if it isnt *)
 let pmap_ok (p: 'parsed parser_f) (left: 'parsed -> string -> 'b parser_result)  = (pmap p left error)
 (* carry the value through if it isn't an error and execute if it is *)
-let pmap_error (p: 'parsed parser_f) (right: parser_error -> string -> 'b parser_result)  = (pmap p ok right)
+let pmap_error (p: 'parsed parser_f) (right: parser_error -> string -> 'b parser_result)  = 
+        (pmap p 
+                (fun r rest -> Ok (r, rest))
+                right)
 
 (* get a char from the string or error if at end *)
 let get_char s = (match (String.length s) with
@@ -35,13 +38,13 @@ let eof = pmap get_char
 
 
 (* parse a single specific character *)
-let charp c = match_char (fun ch -> c == ch) (ExpectationError (String.make 1 c))
+let charp c = match_char (fun ch -> ch == c) (ExpectationError (String.make 1 c))
 
 (* repeat a given parser at least once *)
 let rec many1 (p: 'parsed parser_f) = pmap_ok p 
         (fun r rest -> ( pmap (many1 p) 
                 (fun results rest -> Ok (r :: results, rest))
-                (fun _ rest -> Ok (r :: [], rest)) 
+                (fun _ _ -> Ok (r :: [], rest)) 
                 rest))
 
 

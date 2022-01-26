@@ -4,7 +4,7 @@ open Errors
 (* boolean functions to check for character set membership *)
 let isdigit c = c >= '0' && c <= '9'
 let isalpha c = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-let is_whitespace c = (c == ' ' || c == '\t' || c == '\n')
+let is_whitespace (c: char) = (c == ' ' || c == '\t' || c == '\n')
 
 (* check for a single digit *)
 let match_digit = match_char isdigit (ExpectationError "digit")
@@ -43,7 +43,7 @@ let integer = pmap_ok
 
 (* match an identifier that contains aphanumeric characters and possibly underscores *)
 let identifier = pmap
-        ((match_alpha <|> (charp '_')) <+> (many (match_alnum <|> (charp '_'))))
+        (match_alpha <+> (many match_alnum))
         (ok_construct (
                 fun (first, rest) -> ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)))))
         (fun _ input -> Error (ExpectationError "identifier", input))
