@@ -35,23 +35,21 @@ let term_oper = (parse_op '*' Times) <|> (parse_op '/' Divide)
 let term = chainl1 number (pmap_ok term_oper (ok_construct binary))
 let expr = chainl1 term (pmap_ok expr_oper (ok_construct binary))
 
-let stmt = 
+let stmt = (pmap_ok 
         (pmap_ok
                 (
                         (remove_whitespace (keyword "let")) 
                         <-+> identifier
                         <-+> (charp '=')
                         <-+> expr
-                        <-+> (charp ';')
-                        )
-                (fun ((((_, name),_), exp), _) rest -> Ok (binding name exp, rest))
-                ) 
-        <|> (pmap_ok
-                (
-                        (remove_whitespace expr) 
-                        <-+> (charp ';'))
-                (fun (exp, _) rest -> Ok (stmt_expr exp, rest))
                 )
+                (fun (((_, name),_), exp) rest -> Ok (binding name exp, rest))
+        <|> (pmap_ok
+                (remove_whitespace expr)
+                (fun exp rest -> Ok (stmt_expr exp, rest)))
+        <-+> (charp ';'))
+        (fun (exp, _) rest -> Ok (exp, rest)))
+
 
 (* recursively evaluate expressions *)
 let rec eval (expression: expr): int = match expression with
@@ -86,7 +84,7 @@ let () = let exiting = ref false in while (not !exiting) do
                                         print_string ("Result: " ^ name ^ " = ") ; print_int (eval exp)
                         | Expression exp -> print_string "Result: " ; print_int (eval exp); print_endline ""
                         )
-                        (* if there is an error just print it out *)
+                (* if there is an error just print it out *)
                         | Error err -> print_endline ("Error parse failed:" ^ (stringify_parser_error err));)
         | None -> exiting := true
 done
