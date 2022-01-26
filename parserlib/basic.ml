@@ -1,4 +1,5 @@
 open Combinators
+open Errors
 
 (* boolean functions to check for character set membership *)
 let isdigit c = c >= '0' && c <= '9'
@@ -51,7 +52,7 @@ let identifier = pmap
 let keyword k = pmap
         identifier
         (fun ident rest -> (match (String.equal k ident) with
-                                | true -> ok k rest
-                                | false -> error (ExpectationError ("keyword: " ^ k)) rest))
-        (fun _ input -> error (ExpectationError ("keyword: " ^ k)) input)
+                                | true -> Ok(k, rest)
+                                | false -> Error((ExpectationError ("keyword: " ^ k)), rest)))
+        (fun _ input -> Error ((ExpectationError ("keyword: " ^ k)), input))
 
