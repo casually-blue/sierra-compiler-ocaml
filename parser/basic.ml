@@ -14,7 +14,6 @@ let match_digits = many1 match_digit
 let match_alpha = match_char isalpha (ExpectationError "alphabetic character")
 (* match either a digit or a alphabetic character *)
 let match_alnum = match_digit <|> match_alpha
-let match_alnum_ = match_digit <|> match_alpha <|> (charp '_')
 
 
 let whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
@@ -28,18 +27,20 @@ let remove_whitespace p = pmap_ok
 let char_to_number c = (Char.code c) - (Char.code '0')
 
 (* fold a list of numbers into a single number *)
-let list_to_number l = List.fold_left 
+let char_list_to_number l = List.fold_left 
                                 (fun x y -> (x * 10 + y )) 
                                 0 
                                 (List.map char_to_number l)
 
 
+(* match a positive integer *)
 let integer = pmap_ok
         match_digits 
-        (ok_construct list_to_number)
+        (ok_construct char_list_to_number)
 
+(* match an identifier that contains aphanumeric characters and possibly underscores *)
 let identifier = pmap_ok
-        (match_alpha <+> (many match_alnum))
+        ((match_alpha <|> (charp '_')) <+> (many (match_alnum <|> (charp '_'))))
         (ok_construct (
                 fun (first, rest) -> ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)))))
 

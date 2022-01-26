@@ -13,6 +13,14 @@ type expr =
 
 let binary op left right = Binary (op, left, right)
 let number n = Number n
+
+type stmt = 
+        | Expression of expr
+        | Binding of string * expr
+
+let stmt_expr exp = Expression exp
+let binding s exp = Binding (s,exp)
+
 (* parse number *)
 let number = pmap_ok (remove_whitespace integer) (ok_construct number)
 
@@ -26,6 +34,19 @@ let term_oper = (parse_op '*' Times) <|> (parse_op '/' Divide)
 (* left-associative parse expressions and terms *)
 let term = chainl1 number (pmap_ok term_oper (ok_construct binary))
 let expr = chainl1 term (pmap_ok expr_oper (ok_construct binary))
+
+let stmt = 
+        (pmap_ok 
+                (
+                        (remove_whitespace (keyword "let")) <+> 
+                        (remove_whitespace identifier) <+>
+                        (remove_whitespace (charp '=')) <+>
+                        (remove_whitespace expr) <+>
+                        (remove_whitespace (charp ';')))
+                (fun ((((_, name),_), exp), _) rest -> Ok (binding name exp, rest))) <|>
+        (pmap_ok
+                ((remove_whitespace expr) <+> (remove_whitespace (charp ';')))
+                (fun (exp, _) rest -> Ok (stmt_expr exp, rest)))
 
 (* recursively evaluate expressions *)
 let rec eval (expression: expr): int = match expression with
@@ -50,8 +71,12 @@ let () = while true do
         print_string "Result: ";
 
         (* Parse the line *)
-        match (expr line) with
+        match (stmt line) with
                 (* Eval *)
-                | Ok (e, _) -> print_int (eval e)
+                | Ok (s, _) -> (match s with
+                        | Binding (name, exp) ->
+                               print_string (name ^ " = ") ; print_int (eval exp)
+                        | Expression exp -> print_int (eval exp); print_endline ""
+                )
                 | _ -> print_endline "Error parse failed";
 done
