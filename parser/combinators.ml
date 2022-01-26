@@ -45,6 +45,11 @@ let match_char f e = pmap_ok get_char
                 | true -> ok r rest
                 | false -> Error e)
 
+let eof = pmap get_char
+        (fun _ _ -> Error (ExpectationError "end of input"))
+        (fun _ input -> Ok ((), input))
+
+
 (* parse a single specific character *)
 let charp c = match_char (fun ch -> c == ch) (ExpectationError (String.make 1 c))
 
