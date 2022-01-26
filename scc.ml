@@ -38,17 +38,24 @@ let term = chainl1 number (pmap_ok term_oper (ok_construct binary))
 let expr = chainl1 term (pmap_ok expr_oper (ok_construct binary))
 
 let stmt = 
-        (pmap_ok 
-                (
-                        (remove_whitespace (keyword "let")) <+> 
-                        (remove_whitespace identifier) <+>
-                        (remove_whitespace (charp '=')) <+>
-                        (remove_whitespace expr) <+>
-                        (remove_whitespace (charp ';')))
-                (fun ((((_, name),_), exp), _) rest -> Ok (binding name exp, rest))) <|>
         (pmap_ok
-                ((remove_whitespace expr) <+> (remove_whitespace (charp ';')))
-                (fun (exp, _) rest -> Ok (stmt_expr exp, rest)))
+                (
+                        (remove_whitespace (keyword "let")) 
+                        <+> (remove_whitespace identifier) 
+                        <+> (remove_whitespace (charp '=')) 
+                        <+> (remove_whitespace expr) 
+                        <+> (remove_whitespace (charp ';')) 
+                        <+> (remove_whitespace eof)
+                )
+                (fun (((((_, name),_), exp), _), ()) rest -> Ok (binding name exp, rest))
+        ) 
+        <|> (pmap_ok
+                (
+                        (remove_whitespace expr) 
+                        <+> (remove_whitespace (charp ';')) 
+                        <+> (remove_whitespace eof))
+                (fun ((exp, _),()) rest -> Ok (stmt_expr exp, rest))
+        )
 
 (* recursively evaluate expressions *)
 let rec eval (expression: expr): int = match expression with
