@@ -31,6 +31,5 @@ jobs:
           sudo apt update && sudo apt install opam
           opam init
           opam install dune
-          cd $GITHUB_WORKSPACE
           opam exec dune build
 
