@@ -25,11 +25,15 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       
-      # Runs a set of commands using the runners shell
-      - name: Do code
-        run: |
-          sudo apt update && sudo apt install opam
-          opam init
-          opam install dune
-          opam exec dune build
+      - name: Install Ocaml
+        run: sudo apt update && sudo apt install opam
+      
+      - name: Setup Opam
+        run: opam init
+        
+      - name: Install dune
+        run: opam install dune
+        
+      - name: Build project
+        run: opam exec dune build
 
