@@ -1,4 +1,3 @@
-
 type op = 
         | Plus
         | Minus
@@ -37,4 +36,3 @@ let rec expression_to_string expr = (match expr with
         | Binding (name,e) -> name ^ " = " ^ (expression_to_string e)
         | Import s -> "import: " ^ s 
         | Function (name, expr) -> "Function: " ^ name ^ " -> \n" ^ (expression_to_string expr))
-
