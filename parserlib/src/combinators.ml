@@ -13,13 +13,13 @@ let ok_ignore v _ = ok v
 (* map two functions onto the results of a parser *)
 let pmap p if_ok if_error s = match (p s) with
         | Ok (result, rest) -> if_ok result rest
-        | Error (e, _) -> if_error e s
+        | Error (e, rest) -> if_error e rest
 
 
 (* carry the value through if it is an error and execute the function if it isnt *)
 let pmap_ok p if_ok = pmap p if_ok error
 (* carry the value through if it isn't an error and execute if it is *)
-let pmap_error p = pmap p ok
+let pmap_error p if_error = pmap p (fun e v -> (ok e v)) if_error
 
 (* get a char from the string or error if at end *)
 let get_char s = (match (String.length s) with
