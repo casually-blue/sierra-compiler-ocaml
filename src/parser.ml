@@ -20,22 +20,32 @@ let binary_op term op ctor = chainl1 (remove_whitespace term) (pmap_ok (remove_w
 let term = binary_op number_p term_oper binary
 let expr_binary = binary_op term expr_oper binary
 
-let rec non_list_expression_p s = ( expr_binary <|> function_p <|> import_p <|> binding_p ) s
-and expression_p s = (expr_list_p <|> non_list_expression_p) s
+let rec expression_p s = (expr_list_p <|> non_list_expression_p) s
+
+and non_list_expression_p s = ( expr_binary <|> function_p <|> import_p <|> binding_p ) s
+
+(* parse a let binding of the form "let x = expression" *)
 and binding_p s = pmap_ok
                 ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_p)
                 (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp))) s
+
+(* parse an import of the form "import name" *)
 and import_p = pmap_ok
                 ((keyword "import") <-+> identifier)
                 (flatmap flatten2 (fun (_, lib) -> (import lib)))
+
+(* parse a function of the form "fun name () { expression }" *)
 and function_p s = pmap_ok
         ((keyword "fun") <-+> identifier <-+> (charp '(') <-+> (charp ')') <-+> (charp '{') <-+> expression_p <-+> (charp '}'))
         (flatmap flatten7 (fun (_,name,_,_,_,expr,_) -> (func name expr))) s
+
+(* parse expressions separated by semicolons *)
 and expr_list_p s = (pmap_ok
                 (non_list_expression_p <-+> (charp ';') <-+> expression_p)
                 (flatmap flatten3 (fun (e,_,eml) -> (match eml with
                         | ExprList el -> (expr_list (e :: el))
                         | e2 -> (expr_list (e :: e2 :: [])))))) s
 
+(* a program is just an expression followed by the end of input *)
 let program = pmap_ok (remove_whitespace (expression_p <-+> eof))
         (flatmap flatten2 (fun (e, ()) -> e))
