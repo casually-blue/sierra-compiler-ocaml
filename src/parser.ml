@@ -34,10 +34,10 @@ let stmt = pmap_ok
         (flatmap flatten2 (fun (exp,_) -> exp))
 
 (* parse a function of the form "function name () { statements }" *)
-let funcp = pmap_ok
+let func_p = pmap_ok
         ((keyword "function") <-+> identifier <-+> (charp '(') <-+> (charp ')') <-+> (charp '{') <-+> (many (remove_whitespace stmt)) <-+> (charp '}'))
         (flatmap flatten7 (fun (_,name,_,_,_,stmts,_) -> (func name (block stmts))))
 
 
-let programp = pmap_ok (remove_whitespace (funcp <-+> eof))
+let program = pmap_ok (remove_whitespace (func_p <-+> eof))
         (flatmap flatten2 (fun (f, ()) -> f))
