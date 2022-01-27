@@ -18,10 +18,11 @@ let binary_op term op ctor = chainl1 (remove_whitespace term) (pmap_ok (remove_w
 
 (* parse expressions separated by semicolons *)
 let rec expression_p s = (pmap_ok
-                (
-                        sepBy (remove_whitespace (charp ';')) 
-                                (remove_whitespace ( expr_binary <|> function_p <|> import_p <|> binding_p )))
-                (fun elist rest -> Ok (expr_list elist,rest))) s
+                (sepBy 
+                        (remove_whitespace (charp ';')) 
+                        (remove_whitespace ( expr_binary <|> function_p <|> import_p <|> binding_p ))
+                )
+                (ok_construct expr_list)) s
 
 (* parse a let binding of the form "let x = expression" *)
 and binding_p s = pmap_ok
