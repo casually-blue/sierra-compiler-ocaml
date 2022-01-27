@@ -8,46 +8,33 @@ type op =
 type expr = 
         | Number of int
         | Binary of op * expr * expr
-
-
-
-let binary op left right = Binary (op, left, right)
-let number n = Number n
-
-type stmt = 
-        | Expression of expr
+        | ExprList of expr list
+        | Function of string * expr 
+        | Import of string
         | Binding of string * expr
 
-type block = Block of (stmt list)
-let block stmts = Block stmts
+let number n = Number n
+let binary op left right = Binary (op, left, right)
+let expr_list e = ExprList e
+let function_c name e = Function (name,e)
+let binding s exp = Binding (s,exp)
+let import s = Import s
 
-type func = Function of string * block
 let func name block  = Function (name, block)
 
-let stmt_expr exp = Expression exp
-let binding s exp = Binding (s,exp)
+let op_to_string o = match o with
+        | Plus -> "+"
+        | Minus -> "-"
+        | Times -> "*"
+        | Divide -> "/"
 
-(* recursively evaluate expressions *)
-let rec eval (expression: expr): int = match expression with
-        (* just give the value *)
-        | Number a -> a
-        (* get a function to apply to the left and right values *)
-        | Binary (op,left,right) -> (match op with
-                | Plus -> (+)
-                | Minus -> (-)
-                | Times -> fun a b -> (a * b)
-                | Divide -> (/)) 
-        (* recurse *)
-        (eval left) (eval right)
-
-let stmt_to_string stmt = match stmt with
-        | Expression e -> string_of_int (eval e)
-        | Binding (name,e) -> name ^ " = " ^ (string_of_int (eval e))
-
-let block_to_string (Block stmts) = List.fold_left
-                                (fun l r -> l ^ "\n\t" ^ (stmt_to_string r))
-                                ""
-                                stmts
-
-let func_to_string (Function (name, block)) = "function " ^ name ^ "{{ " ^ (block_to_string block) ^ "\n}}\n "
+let rec expression_to_string expr = (match expr with
+        | Number n -> string_of_int n
+        | Binary (o, l, r) -> "(" ^ (expression_to_string l) ^ (op_to_string o) ^ (expression_to_string r) ^ ")"
+        | ExprList (expr :: rest) -> (expression_to_string expr) ^ "\n" ^ 
+                (expression_to_string (expr_list rest))
+        | ExprList [] -> ""
+        | Binding (name,e) -> name ^ " = " ^ (expression_to_string e)
+        | Import s -> "import: " ^ s 
+        | Function (name, expr) -> "Function: " ^ name ^ " -> \n" ^ (expression_to_string expr))
 

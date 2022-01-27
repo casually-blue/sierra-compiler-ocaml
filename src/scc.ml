@@ -16,7 +16,7 @@ let () = let exiting = ref false in while (not !exiting) do
         | Some line -> (
                 (* Parse the line *)
                 match (program line) with
-                | Ok (f, _) -> print_string (func_to_string f)                 
+                | Ok (e, _) -> print_string (expression_to_string e)                 
                 | Error (err, input) -> print_endline ("Error parse failed:" ^ (stringify_parser_error err) ^ " (\"" ^ input ^ "\")");)
         | None -> exiting := true
 done
