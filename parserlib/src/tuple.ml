@@ -5,5 +5,7 @@ let flatten5 ((((a,b),c),d),e) = (a,b,c,d,e)
 let flatten6 (((((a,b),c),d),e),f) = (a,b,c,d,e,f)
 let flatten7 ((((((a,b),c),d),e),f),g)= (a,b,c,d,e,f,g)
 let flatten8 (((((((a,b),c),d),e),f),g),h) = (a,b,c,d,e,f,g,h)
+let flatten9 ((((((((a,b),c),d),e),f),g),h),i) = (a,b,c,d,e,f,g,h,i)
+let flatten10 (((((((((a,b),c),d),e),f),g),h),i),j) = (a,b,c,d,e,f,h,i,j)
 
 let flatmap ff constr value rest = Ok((constr (ff value)), rest)
