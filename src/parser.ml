@@ -46,11 +46,6 @@ and function_p s = pmap_ok
 (* left-associative parse expressions *)
 and expr_binary = binary_op (binary_op number_p term_oper binary) expr_oper binary
 
-
-
-
-                        
-
 (* a program is just an expression followed by the end of input *)
 let program = pmap_ok (remove_whitespace (expression_p <-+> eof))
         (flatmap flatten2 (fun (e, ()) -> e))
