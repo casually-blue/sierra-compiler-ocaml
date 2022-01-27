@@ -7,8 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     container: ocaml/opam:debian-10-ocaml-4.06
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - run: git clone https://github.com/casually-blue/sierra-compiler-ocaml
+      - run: cd sierra-compiler-ocaml
         
       - run: opam install dune
       - run: opam exec -- dune build
