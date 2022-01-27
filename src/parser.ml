@@ -19,7 +19,9 @@ let binary_op term op ctor = chainl1 (remove_whitespace term) (pmap_ok (remove_w
 (* parse expressions separated by semicolons *)
 let rec expression_p s = (pmap_ok
                 (
+                        (* parse one of the types of expressions *)
                         ( expr_binary <|> function_p <|> import_p <|> binding_p ) 
+                        (* if we have a semicolon recurse *)
                         <-+> (maybe ((charp ';') <-+> expression_p))
                 )
                 (fun (e,m_exp) rest -> (match m_exp with
