@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
     container: ocaml/opam:debian-10-ocaml-4.06
     steps:
       - name: Checkout code
