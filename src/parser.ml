@@ -32,13 +32,13 @@ let rec expression_p s = (pmap_ok
 
 (* parse a let binding of the form "let x = expression" *)
 and binding_p s = pmap_ok
-                ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_p)
-                (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp))) s
+                        ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_p)
+                        (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp))) s
 
 (* parse an import of the form "import name" *)
-and import_p = pmap_ok
+and import_p s = pmap_ok
                 ((keyword "import") <-+> identifier)
-                (flatmap flatten2 (fun (_, lib) -> (import lib)))
+                (flatmap flatten2 (fun (_, lib) -> (import lib))) s
 
 (* parse a function of the form "fun name () { expression }" *)
 and function_p s = pmap_ok
@@ -46,7 +46,7 @@ and function_p s = pmap_ok
         (flatmap flatten7 (fun (_,name,_,_,_,expr,_) -> (func name expr))) s
 
 (* left-associative parse expressions *)
-and expr_binary = binary_op (binary_op number_p term_oper binary) expr_oper binary
+and expr_binary s = binary_op (binary_op number_p term_oper binary) expr_oper binary s
 
 (* a program is just an expression followed by the end of input *)
 let program = pmap_ok (remove_whitespace (expression_p <-+> eof))
