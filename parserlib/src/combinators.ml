@@ -2,46 +2,46 @@ open Errors
 open Types
 
 (* put a type constructor into a parse function *)
-let ok_construct con r rest = Ok ((con r), rest)
+let ok_construct con r = ok (con r)
+
+(* flatten a nested tuple and apply the given constructor to the values *)
+let flatmap ff constr value = ok_construct constr (ff value)
 
 (* ignore the returned result and substitute it with your own *)
-let ok_ignore v _ rest = Ok (v, rest)
+let ok_ignore v _ = ok v
 
 (* map two functions onto the results of a parser *)
-let pmap (p: 'parsed parser_f) left right s = match (p s) with
-        | Ok (result, rest) -> left result rest
-        | Error (e, _) -> right e s
+let pmap p if_ok if_error s = match (p s) with
+        | Ok (result, rest) -> if_ok result rest
+        | Error (e, _) -> if_error e s
 
 
 (* carry the value through if it is an error and execute the function if it isnt *)
-let pmap_ok (p: 'parsed parser_f) (left: 'parsed -> string -> 'b parser_result)  = (pmap p left error)
+let pmap_ok p if_ok = pmap p if_ok error
 (* carry the value through if it isn't an error and execute if it is *)
-let pmap_error (p: 'parsed parser_f) (right: parser_error -> string -> 'b parser_result)  = 
-        (pmap p 
-                (fun r rest -> Ok (r, rest))
-                right)
+let pmap_error p = pmap p ok
 
 (* get a char from the string or error if at end *)
 let get_char s = (match (String.length s) with
-        | 0 -> Error (EndOfInputError, s)
-        | _ -> Ok (String.get s 0, (String.sub s 1 ((String.length s) - 1))))
+        | 0 -> error EndOfInputError s
+        | _ -> ok (String.get s 0) (String.sub s 1 ((String.length s) - 1)))
 
 (* check if a character from the input matches a predicate *)
 let match_char f e = pmap_ok get_char
         (fun r rest -> match (f r) with
-                | true -> Ok (r, rest)
-                | false -> Error (e, rest))
+                | true -> ok r rest
+                | false -> error e rest)
 
 let eof = pmap get_char
-        (fun _ input -> Error (ExpectationError "end of input", input))
-        (fun _ input -> Ok ((), input))
+        (fun _ input -> error (ExpectationError "end of input") input)
+        (fun _ input -> ok () input)
 
 
 (* parse a single specific character *)
-let charp c = match_char (fun ch -> ch == c) (ExpectationError (String.make 1 c))
+let charp c = match_char ((==) c) (ExpectationError (String.make 1 c))
 
 (* repeat a given parser at least once *)
-let rec many1 (p: 'parsed parser_f) = pmap_ok p 
+let rec many1 p = pmap_ok p 
         (fun r rest -> ( pmap (many1 p) 
                 (fun results rest -> Ok (r :: results, rest))
                 (fun _ _ -> Ok (r :: [], rest)) 
@@ -49,7 +49,7 @@ let rec many1 (p: 'parsed parser_f) = pmap_ok p
 
 
 (* repeat a given parser *)
-let many (p: 'parsed parser_f): ('parsed list) parser_f  = pmap_error (many1 p) (ok_ignore [])
+let many p = pmap_error (many1 p) (ok_ignore [])
 
 (* chain two parsers together *)
 let (<+>) p1 p2 = pmap_ok p1 
