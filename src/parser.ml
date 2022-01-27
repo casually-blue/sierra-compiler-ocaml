@@ -1,5 +1,6 @@
 open Parserlib.Combinators
 open Parserlib.Basic
+open Parserlib.Tuple
 
 open Ast
 
@@ -22,7 +23,7 @@ let expr = binary_op term expr_oper binary
 (* variable binding of the form "let x = expr" *)
 let binding = pmap_ok
                 ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expr)
-                (fun (((_, name),_), exp) rest -> Ok (binding name exp, rest))
+                (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp)))
 
 (* just an expression *)
 let bare_expression = pmap_ok expr (ok_construct stmt_expr)
@@ -30,12 +31,13 @@ let bare_expression = pmap_ok expr (ok_construct stmt_expr)
 (* parse either a binding or an expression followed by a semicolon *)
 let stmt = pmap_ok 
         ((bare_expression <|> binding) <-+> (charp ';'))
-        (fun (exp, _) rest -> Ok (exp, rest))
+        (flatmap flatten2 (fun (exp,_) -> exp))
 
 (* parse a function of the form "function name () { statements }" *)
 let funcp = pmap_ok
         ((keyword "function") <-+> identifier <-+> (charp '(') <-+> (charp ')') <-+> (charp '{') <-+> (many (remove_whitespace stmt)) <-+> (charp '}'))
-        (fun ((((((_, name), _), _), _), stmts), _) rest -> Ok((func name (block stmts)), rest))
+        (flatmap flatten7 (fun (_,name,_,_,_,stmts,_) -> (func name (block stmts))))
+
 
 let programp = pmap_ok (remove_whitespace (funcp <-+> eof))
-        (fun (f, ()) rest -> Ok(f, rest))
+        (flatmap flatten2 (fun (f, ()) -> f))
