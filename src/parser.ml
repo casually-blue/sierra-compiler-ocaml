@@ -18,30 +18,29 @@ let binary_op term op ctor = chainl1 (remove_whitespace term) (pmap_ok (remove_w
 
 (* parse expressions separated by semicolons *)
 let rec expression_p s = (pmap_ok
-                (sepBy 
-                        (remove_whitespace (charp ';')) 
-                        (remove_whitespace ( expr_binary <|> function_p <|> import_p <|> binding_p ))
-                )
-                (ok_construct expr_list)) s
+  (sepBy 
+    (remove_whitespace (charp ';')) 
+    (remove_whitespace ( expr_binary <|> function_p <|> import_p <|> binding_p )))
+  (ok_construct expr_list)) s
 
 (* parse a let binding of the form "let x = expression" *)
 and binding_p s = pmap_ok
-                        ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_p)
-                        (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp))) s
+  ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_p)
+  (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp))) s
 
 (* parse an import of the form "import name" *)
 and import_p s = pmap_ok
-                ((keyword "import") <-+> identifier)
-                (flatmap flatten2 (fun (_, lib) -> (import lib))) s
+  ((keyword "import") <-+> identifier)
+  (flatmap flatten2 (fun (_, lib) -> (import lib))) s
 
 (* parse a function of the form "fun name () { expression }" *)
 and function_p s = pmap_ok
-        ((keyword "fun") <-+> identifier <-+> (charp '(') <-+> (charp ')') <-+> (charp '{') <-+> expression_p <-+> (charp '}'))
-        (flatmap flatten7 (fun (_,name,_,_,_,expr,_) -> (func name expr))) s
+  ((keyword "fun") <-+> identifier <-+> (charp '(') <-+> (charp ')') <-+> (charp '{') <-+> expression_p <-+> (charp '}'))
+  (flatmap flatten7 (fun (_,name,_,_,_,expr,_) -> (func name expr))) s
 
 (* left-associative parse expressions *)
 and expr_binary s = binary_op (binary_op number_p term_oper binary) expr_oper binary s
 
 (* a program is just an expression followed by the end of input *)
 let program = pmap_ok (remove_whitespace (expression_p <-+> eof))
-        (flatmap flatten2 (fun (e, ()) -> e))
+  (flatmap flatten2 (fun (e, ()) -> e))
