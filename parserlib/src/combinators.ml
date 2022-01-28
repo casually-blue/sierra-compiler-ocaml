@@ -13,7 +13,7 @@ let ok_ignore v _ = ok v
 (* map two functions onto the results of a parser *)
 let pmap p if_ok if_error s = match (p s) with
         | Ok (result, rest) -> if_ok result rest
-        | Error (e, rest) -> if_error e rest
+        | Error (e, _) -> if_error e s 
 
 
 (* carry the value through if it is an error and execute the function if it isnt *)
