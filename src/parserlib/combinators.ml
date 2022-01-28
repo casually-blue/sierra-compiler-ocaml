@@ -11,15 +11,17 @@ let flatmap ff constr value = ok_construct constr (ff value)
 let ok_ignore v _ = ok v
 
 (* map two functions onto the results of a parser *)
-let pmap p (if_ok: 'a -> string -> 'b parser_result) (if_error: parser_error -> string -> 'b parser_result) s = match (p s) with
+let pmap (p: 'a parser_f) (if_ok: 'a -> string -> 'b parser_result) (if_error: parser_error -> string -> 'b parser_result) s = match (p s) with
         | Ok (result, rest) -> if_ok result rest
         | Error (e, _) -> if_error e s 
 
 
+
+
 (* carry the value through if it is an error and execute the function if it isnt *)
-let pmap_ok p if_ok = pmap p if_ok error
+let pmap_ok (p: 'a parser_f) (if_ok: 'a -> string -> 'b parser_result): string -> 'b parser_result = pmap p if_ok error
 (* carry the value through if it isn't an error and execute if it is *)
-let pmap_error (p: 'a parser_f) (if_error: parser_error -> string -> 'b parser_result): string -> 'b parser_result = pmap p (fun e v -> (ok e v)) if_error
+let pmap_error (p: 'a parser_f) (if_error: parser_error -> string -> 'a parser_result): string -> 'a parser_result = pmap p ok if_error
 
 (* get a char from the string or error if at end *)
 let get_char s = (match (String.length s) with
