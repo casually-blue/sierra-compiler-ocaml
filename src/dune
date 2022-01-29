@@ -1,3 +1,4 @@
 (executable
  (name scc)
- (libraries parserlib core))
+ (libraries parserlib core)
+ (preprocess (pps ppx_let)))
