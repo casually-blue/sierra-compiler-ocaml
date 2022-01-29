@@ -14,7 +14,7 @@ let escaped_char = pmap_ok ((charp '\\') <+> get_char )
     | a -> error (ExpectationError ("escapable character not " ^ (String.make 1 a))) rest
   ))
 
-let string_char = (escaped_char <|> (antimatch_char ((==) '"') (ExpectationError "not quote")))
+let string_char = (escaped_char <|> (antimatch_char (fun c -> c == '"' || c == '\\') (ExpectationError "not quote")))
 let string_p = pmap_ok ((charp '"') <+> (many string_char) <+> (charp '"'))
   (flatmap flatten3 (fun (_,scs,_) -> string (String.of_seq (List.to_seq scs))))
 
