@@ -5,6 +5,7 @@ open Parserlib.Types
 
 open Ast
 
+(* parse a string escape *)
 let escaped_char = pmap_ok ((charp '\\') <+> get_char )
   (fun (_,c) rest -> (match c with
     | '\"' -> ok '\"' rest
@@ -14,7 +15,11 @@ let escaped_char = pmap_ok ((charp '\\') <+> get_char )
     | a -> error (ExpectationError ("escapable character not " ^ (String.make 1 a))) rest
   ))
 
-let string_char = (escaped_char <|> (antimatch_char (fun c -> c == '"' || c == '\\') (ExpectationError "not quote")))
+(* parse a single character or escaped character of a string literal *)
+let string_char = (escaped_char <|> 
+  (antimatch_char (fun c -> c == '"' || c == '\\') (ExpectationError "not quote")))
+
+(* parse a string literal*)
 let string_p = pmap_ok ((charp '"') <+> (many string_char) <+> (charp '"'))
   (flatmap flatten3 (fun (_,scs,_) -> string (String.of_seq (List.to_seq scs))))
 
