@@ -35,7 +35,7 @@ jobs:
         run: opam install -y dune
         
       - name: Install Batteries
-        run: opam install -y batteries
+        run: opam install -y core 
         
       - name: Build project
         run: opam exec dune build

@@ -1,28 +1,19 @@
-open Batteries
+open Core
+open In_channel
+open Out_channel
 
 open Parserlib.Errors
 
 open Ast
 open Parser
 
-module P = BatOptParse
-
-let input_opt = P.StdOpt.str_option ~metavar:"STRING" ()
-
-let optparser : P.OptParser.t = 
-  P.OptParser.make
-    ~prog: "scc"
-    ~usage: "%prog - compile sierra source code"
-    ~version: "0.1"
-    ()
-
-let sl  = P.OptParser.parse_argv optparser
-
 (* REPL *)
 let () = let exiting = ref false in while (not !exiting) do
   (* prompt for a line *)
   print_string ">> ";
-  let line = (try Some(read_line()) with End_of_file -> None) in
+  flush stdout;
+  let line = input_line stdin
+    ~fix_win_eol: true in
 
   (* parse the line *)
   match line with
