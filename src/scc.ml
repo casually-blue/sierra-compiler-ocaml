@@ -1,7 +1,28 @@
+open Batteries
+
 open Parserlib.Errors
 
 open Ast
 open Parser
+
+module P = BatOptParse
+
+let input_opt = P.StdOpt.str_option ~metavar:"STRING" ()
+
+let optparser : P.OptParser.t = 
+  P.OptParser.make
+    ~prog: "scc"
+    ~usage: "%prog - compile sierra source code"
+    ~version: "0.1"
+    ()
+
+let sl  = P.OptParser.parse_argv optparser
+
+let rec print_string_list sl = match sl with
+  | [] -> ""
+  | s :: l -> s ^ " " ^ (print_string_list l)
+
+let () = print_string (print_string_list sl)
 
 (* REPL *)
 let () = let exiting = ref false in while (not !exiting) do
