@@ -22,10 +22,8 @@ let print_string_flush s =
 (* REPL *)
 let repl = (fun () -> let exiting = ref false in while (not !exiting) do
   (* prompt for a line *)
-  let line = (prompt_line ">>> ") in
-
   (* parse the line *)
-  match line with
+  match (prompt_line ">>> ") with
   | Some line -> (
     (* Parse the line *)
     match (program line) with
