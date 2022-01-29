@@ -21,6 +21,7 @@ type expr =
   | Import of qualified_id
   | Binding of string * expr
   | FnCall of string
+  | String of string
 
 
 let number n = Number n
@@ -30,6 +31,7 @@ let function_c name e = Function (name,e)
 let binding s exp = Binding (s,exp)
 let import id = Import id
 let fncall name = FnCall name
+let string s = String s
 
 let func name block  = Function (name, block)
 
@@ -53,3 +55,4 @@ let rec expression_to_string expr = match expr with
   | Import id -> "import: " ^ (qualified_id_to_string id)
   | Function (name, expr) -> "Function: " ^ name ^ " -> \n" ^ (expression_to_string expr)
   | FnCall name -> "calling: " ^ name
+  | String s -> "String: " ^ s

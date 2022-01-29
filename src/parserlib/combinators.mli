@@ -19,8 +19,11 @@ val pmap_ok: 'a parser_f -> ('a -> string -> 'b parser_result) -> 'b parser_f
 (* map a function over only the error branch of a parser *)
 val pmap_error: 'a parser_f -> (parser_error -> string -> 'a parser_result) -> string -> 'a parser_result
 
+val get_char: string -> char parser_result
+
 (* check if a character satisfies a predicate *)
 val match_char: (char -> bool) -> parser_error -> string -> char parser_result
+val antimatch_char: (char -> bool) -> parser_error -> string -> char parser_result
 
 (* return an error if the input is not at its end *)
 val eof: string -> unit parser_result

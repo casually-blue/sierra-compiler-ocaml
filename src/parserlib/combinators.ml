@@ -34,6 +34,11 @@ let match_char f e = pmap_ok get_char
                 | true -> ok r rest
                 | false -> error e rest)
 
+let antimatch_char f e = pmap_ok get_char
+        (fun r rest -> match (f r) with
+                | false -> ok r rest
+                | true -> error e rest)
+
 let eof = pmap get_char
         (fun _ input -> error (ExpectationError "end of input") input)
         (fun _ input -> ok () input)

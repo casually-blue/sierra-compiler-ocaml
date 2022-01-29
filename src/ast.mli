@@ -20,5 +20,6 @@ val binding: string -> expr -> expr
 val import: qualified_id -> expr
 val func: string -> expr -> expr
 val fncall: string -> expr
+val string: string -> expr
 
 val expression_to_string: expr -> string

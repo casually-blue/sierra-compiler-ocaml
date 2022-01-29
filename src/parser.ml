@@ -1,8 +1,22 @@
 open Parserlib.Combinators
 open Parserlib.Basic
 open Parserlib.Tuple
+open Parserlib.Types
 
 open Ast
+
+let escaped_char = pmap_ok ((charp '\\') <+> get_char )
+  (fun (_,c) rest -> (match c with
+    | '\"' -> ok '\"' rest
+    | 'n' -> ok '\n' rest
+    | 't' -> ok '\t' rest
+    | '\\' -> ok '\\' rest
+    | a -> error (ExpectationError ("escapable character not " ^ (String.make 1 a))) rest
+  ))
+
+let string_char = (escaped_char <|> (antimatch_char ((==) '"') (ExpectationError "not quote")))
+let string_p = pmap_ok ((charp '"') <+> (many string_char) <+> (charp '"'))
+  (flatmap flatten3 (fun (_,scs,_) -> string (String.of_seq (List.to_seq scs))))
 
 (* parse number *)
 let number_p = pmap_ok integer (ok_construct number)
@@ -24,7 +38,7 @@ let qualified_id_p s = chainl1
 let rec expression_p s = (pmap_ok
   (sepBy 
     (remove_whitespace (charp ';')) 
-    (remove_whitespace ( expr_binary <|> function_p <|> import_p <|> fncall_p <|> binding_p )))
+    (remove_whitespace ( string_p <|> expr_binary <|> function_p <|> import_p <|> fncall_p <|> binding_p )))
   (ok_construct expr_list)) s
 
 (* parse a let binding of the form "let x = expression" *)
