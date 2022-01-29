@@ -23,6 +23,8 @@ val get_char: string -> char parser_result
 
 (* check if a character satisfies a predicate *)
 val match_char: (char -> bool) -> parser_error -> string -> char parser_result
+
+(* check if a character does not match a predicate *)
 val antimatch_char: (char -> bool) -> parser_error -> string -> char parser_result
 
 (* return an error if the input is not at its end *)
