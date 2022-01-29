@@ -32,10 +32,10 @@ jobs:
         run: opam init
         
       - name: Install dune
-        run: opam install dune
+        run: opam install -y dune
         
-      - name: Install Betteries
-        run: opam install batteries
+      - name: Install Batteries
+        run: opam install -y batteries
         
       - name: Build project
         run: opam exec dune build
