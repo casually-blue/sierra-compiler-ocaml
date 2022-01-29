@@ -18,12 +18,6 @@ let optparser : P.OptParser.t =
 
 let sl  = P.OptParser.parse_argv optparser
 
-let rec print_string_list sl = match sl with
-  | [] -> ""
-  | s :: l -> s ^ " " ^ (print_string_list l)
-
-let () = print_string (print_string_list sl)
-
 (* REPL *)
 let () = let exiting = ref false in while (not !exiting) do
   (* prompt for a line *)
