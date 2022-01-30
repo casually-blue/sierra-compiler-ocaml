@@ -62,14 +62,16 @@ let charp c = match_char ((==) c) (ExpectationError (String.make 1 c))
 
 (* repeat a given parser at least once *)
 let rec many1 p = pmap_ok p 
-        (fun r rest -> ( pmap (many1 p) 
-                (fun results rest -> Ok (r :: results, rest))
-                (fun _ _ -> Ok (r :: [], rest)) 
-                rest))
+  (fun r rest -> ( 
+    pmap (many1 p) 
+      (fun results rest -> Ok (r :: results, rest))
+      (fun _ _ -> Ok (r :: [], rest)) 
+      rest
+  ))
 
 
 (* repeat a given parser *)
-let many p = pmap_error (many1 p) (ok_ignore [])
+let many p s = pmap_error (many1 p) (fun e _ -> (ok_ignore []) e s) s
 
 (* chain two parsers together *)
 let (<+>) p1 p2 = pmap_ok p1 
