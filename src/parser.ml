@@ -50,6 +50,8 @@ let rec expression_p s = (pmap_ok
 and binding_p s = pmap_ok
   ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_p)
   (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp))) s
+
+(* parse an eval of a given string *)
 and eval_p s = pmap_ok
   ((keyword "eval") <-+> string_p)
   (flatmap flatten2 (fun (_,code) -> (
@@ -60,6 +62,9 @@ and eval_p s = pmap_ok
       | _ -> code
 
   ))) s
+
+
+(* parse a function call of the form "name()" *)
 and fncall_p s = pmap_ok
   (identifier <-+> (charp '(') <-+> (charp ')'))
   (flatmap flatten3 (fun (name,_,_) -> (fncall name))) s
