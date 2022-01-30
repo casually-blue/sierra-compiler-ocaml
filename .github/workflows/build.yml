@@ -34,8 +34,11 @@ jobs:
       - name: Install dune
         run: opam install -y dune
         
-      - name: Install Batteries
+      - name: Install Core
         run: opam install -y core 
+      
+      - name: Install alcotest
+        run: opam install -y alcotest
         
       - name: Build project
         run: opam exec dune build
