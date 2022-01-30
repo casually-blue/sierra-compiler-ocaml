@@ -43,26 +43,13 @@ let qualified_id_p s = chainl1
 let rec expression_p s = (pmap_ok
   (sepBy 
     (remove_whitespace (charp ';')) 
-    (remove_whitespace ( string_p <|> eval_p <|> expr_binary <|> function_p <|> import_p <|> fncall_p <|> binding_p )))
+    (remove_whitespace ( string_p <|> expr_binary <|> function_p <|> import_p <|> fncall_p <|> binding_p )))
   (ok_construct expr_list)) s
 
 (* parse a let binding of the form "let x = expression" *)
 and binding_p s = pmap_ok
   ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_p)
   (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp))) s
-
-(* parse an eval of a given string *)
-and eval_p s = pmap_ok
-  ((keyword "eval") <-+> string_p)
-  (flatmap flatten2 (fun (_,code) -> (
-    match code with
-      | String s -> (match (expression_p s) with
-        | Ok (e, _) -> e
-        | _ -> code)
-      | _ -> code
-
-  ))) s
-
 
 (* parse a function call of the form "name()" *)
 and fncall_p s = pmap_ok
