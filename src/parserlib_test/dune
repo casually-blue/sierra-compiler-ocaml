@@ -1,0 +1,3 @@
+(test
+ (name parserlib_test)
+ (libraries parserlib alcotest))
