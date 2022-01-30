@@ -11,37 +11,50 @@ let flatmap ff constr value = ok_construct constr (ff value)
 let ok_ignore v _ = ok v
 
 (* map two functions onto the results of a parser *)
-let pmap (p: 'a parser_f) (if_ok: 'a -> string -> 'b parser_result) (if_error: parser_error -> string -> 'b parser_result) s = match (p s) with
+let pmap 
+  (p: 'a parser_f) 
+  (if_ok: 'a -> string -> 'b parser_result) 
+  (if_error: parser_error -> string -> 'b parser_result) 
+  (input: string): 
+    'b parser_result
+= match (p input) with
         | Ok (result, rest) -> if_ok result rest
-        | Error (e, _) -> if_error e s 
-
-
-
+        | Error (e, rest) -> if_error e rest
 
 (* carry the value through if it is an error and execute the function if it isnt *)
-let pmap_ok (p: 'a parser_f) (if_ok: 'a -> string -> 'b parser_result): string -> 'b parser_result = pmap p if_ok error
+let pmap_ok 
+  (p: 'a parser_f) 
+  (if_ok: 'a -> string -> 'b parser_result): 
+    'b parser_f 
+= pmap p if_ok error
+
 (* carry the value through if it isn't an error and execute if it is *)
-let pmap_error (p: 'a parser_f) (if_error: parser_error -> string -> 'a parser_result): string -> 'a parser_result = pmap p ok if_error
+let pmap_error 
+  (p: 'a parser_f) 
+  (if_error: parser_error -> string -> 'a parser_result): 
+    'a parser_f 
+= pmap p ok if_error
 
 (* get a char from the string or error if at end *)
 let get_char s = (match (String.length s) with
-        | 0 -> error EndOfInputError s
-        | _ -> ok (String.get s 0) (String.sub s 1 ((String.length s) - 1)))
+  | 0 -> error EndOfInputError ""
+  | _ -> ok (String.get s 0) (String.sub s 1 ((String.length s) - 1)))
 
 (* check if a character from the input matches a predicate *)
-let match_char f e = pmap_ok get_char
-        (fun r rest -> match (f r) with
-                | true -> ok r rest
-                | false -> error e rest)
+let match_char f e s = pmap_ok get_char
+  (fun r rest -> match (f r) with
+    | true -> ok r rest
+    | false -> error e s) s
 
+(* match any char that doesn't fit a predicate *)
 let antimatch_char f e = pmap_ok get_char
-        (fun r rest -> match (f r) with
-                | false -> ok r rest
-                | true -> error e rest)
+  (fun r rest -> match (f r) with
+    | false -> ok r rest
+    | true -> error e rest)
 
 let eof = pmap get_char
         (fun _ input -> error (ExpectationError "end of input") input)
-        (fun _ input -> ok () input)
+        (fun _ _ -> ok () "")
 
 
 (* parse a single specific character *)
@@ -63,15 +76,13 @@ let (<+>) p1 p2 = pmap_ok p1
         (fun r1 rest -> pmap_ok p2
                 (fun r2 rest -> Ok ((r1,r2), rest)) rest)
 
+
+
 (* execute one parser and if it fails execute the second on the same input *)
-let (<|>) p1 p2 = pmap_error p1
-        (fun e1 input -> pmap_error p2
-                ((fun e2 rest -> match (e1, e2) with
-                        | (ExpectationError e1, ExpectationError e2) -> error (ExpectationError (e1 ^ " or " ^ e2)) rest
-                        | (ExpectationError e1, _) -> error (ExpectationError e1) rest
-                        | (_, ExpectationError e2) -> error (ExpectationError e2) rest
-                        | (e1, e2) -> error (ListError (e1, e2)) rest))
-                input)
+let (<|>) p1 p2 = 
+  (fun input_text -> pmap_error p1
+     (fun e1 _ -> pmap_error p2
+        (fun e2 rest -> (error (ListError (e1,e2)) rest)) input_text) input_text)
 
 (* execute a parser repeatedly with another parser in between each instance *)
 let rec sepBy sep p = pmap_ok p
@@ -92,7 +103,7 @@ let rec chainr1 p op = pmap_ok p
         (fun left rest -> pmap op
                 (fun oper rest -> pmap_ok (chainr1 p op)
                         (fun right rest -> Ok (oper left right, rest)) rest)
-                (fun _ input -> Ok (left, input)) rest)
+                (fun _ _ -> Ok (left, rest)) rest)
 
 (* maybe apply a parser to input *)
 let maybe p = pmap p

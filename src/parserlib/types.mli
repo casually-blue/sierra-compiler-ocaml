@@ -1,6 +1,8 @@
 open Errors
 
-type 'parsed parser_result = ('parsed * string, parser_error * string) result
+type 'parsed parser_result = 
+  | Ok of 'parsed * string
+  | Error of parser_error * string
 type 'a parser_f = string -> 'a parser_result
 
 val error: parser_error -> string -> 'a parser_result

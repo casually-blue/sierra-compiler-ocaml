@@ -10,7 +10,15 @@ val base: string -> qualified_id
 val wildcard: qualified_id
 val qualified_id: qualified_id -> qualified_id -> qualified_id
 
-type expr
+type expr = 
+  | Number of int
+  | Binary of op * expr * expr
+  | ExprList of expr list
+  | Function of string * expr 
+  | Import of qualified_id
+  | Binding of string * expr
+  | FnCall of string
+  | String of string
 
 val number: int -> expr
 val binary: op -> expr -> expr -> expr

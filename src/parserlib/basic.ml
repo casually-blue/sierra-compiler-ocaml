@@ -1,5 +1,6 @@
 open Combinators
 open Errors
+open Types
 
 (* boolean functions to check for character set membership *)
 let isdigit c = c >= '0' && c <= '9'
@@ -22,7 +23,7 @@ let whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
 (* execute a parser after ignoring whitespace *)
 let remove_whitespace p = pmap_ok
         (whitespace <+> p) 
-        (fun (_, result) rest -> Ok(result, rest)) 
+        (fun (_, result) rest -> (ok result rest))
 
 let (<-+>) p1 p2 = p1 <+> (remove_whitespace p2)
 
@@ -46,13 +47,13 @@ let identifier = pmap
         (match_alpha <+> (many match_alnum))
         (ok_construct (
                 fun (first, rest) -> ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)))))
-        (fun _ input -> Error (ExpectationError "identifier", input))
+        (fun _ input -> (error (ExpectationError "identifier") input))
 
 (* match a keyword *)
 let keyword k = pmap
         identifier
         (fun ident rest -> (match (String.equal k ident) with
-                                | true -> Ok(k, rest)
-                                | false -> Error((ExpectationError ("keyword: " ^ k)), rest)))
-        (fun _ input -> Error ((ExpectationError ("keyword: " ^ k)), input))
+                                | true -> ok k rest
+                                | false -> error (ExpectationError ("keyword: " ^ k)) rest))
+        (fun _ input -> error (ExpectationError ("keyword: " ^ k)) input)
 

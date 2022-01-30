@@ -32,6 +32,7 @@ let repl = (fun () -> let exiting = ref false in while (not !exiting) do
     | Error (err, input) -> 
         print_endline ("Error parse failed:" ^ (stringify_parser_error err) ^ " (\"" ^ input ^ "\")");)
   | None -> exiting := true
+
 done)
 
 let scc = 
