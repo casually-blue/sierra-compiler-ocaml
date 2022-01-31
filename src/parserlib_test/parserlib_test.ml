@@ -4,11 +4,9 @@ open Parserlib.Combinators
 
 open Alcotest
 
-let parser_result_stringify ppf = function
-    | Ok (c,rest) -> Fmt.pf ppf "%c,%s" c rest
-    | Error (_,rest) -> Fmt.pf ppf "%s" rest
-
-let parser_result_ttb = testable parser_result_stringify (=)
+let parser_result_ttb = testable 
+  (fun pftr -> Format.fprintf pftr "%a" (pp_parser_result Format.pp_print_char))
+  (=)
 
 let expect_equal ty expected actual () = 
   (check ty) "Expected values to be equal" expected actual

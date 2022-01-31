@@ -1,2 +1,3 @@
 (library
-  (name parserlib))
+  (name parserlib)
+  (preprocess (pps ppx_deriving.show)))

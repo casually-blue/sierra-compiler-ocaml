@@ -2,6 +2,7 @@ type parser_error =
         | ExpectationError of string
         | EndOfInputError
         | ListError of parser_error * parser_error
+        [@@deriving show]
 
 let rec stringify_parser_error e = match e with
         | ExpectationError s -> "(Expected: " ^ s ^ ")"
