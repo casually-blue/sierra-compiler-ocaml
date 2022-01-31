@@ -43,7 +43,7 @@ let qualified_id_p s = chainl1
 let rec expression_p s = (pmap_ok
   (sepBy 
     (remove_whitespace (charp ';')) 
-    (remove_whitespace ( string_p <|> expr_binary <|> function_p <|> import_p <|> fncall_p <|> binding_p )))
+    (remove_whitespace ( string_p <|> expr_binary <|> function_p <|> import_p <|> binding_p <|> fncall_p )))
   (ok_construct expr_list)) s
 
 (* parse a let binding of the form "let x = expression" *)

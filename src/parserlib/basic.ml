@@ -50,10 +50,10 @@ let identifier = pmap
         (fun _ input -> (error (ExpectationError "identifier") input))
 
 (* match a keyword *)
-let keyword k = pmap
+let keyword k s = pmap
         identifier
         (fun ident rest -> (match (String.equal k ident) with
                                 | true -> ok k rest
-                                | false -> error (ExpectationError ("keyword: " ^ k)) rest))
-        (fun _ input -> error (ExpectationError ("keyword: " ^ k)) input)
+                                | false -> error (ExpectationError ("keyword: " ^ k)) s))
+        (fun _ input -> error (ExpectationError ("keyword: " ^ k)) input) s
 

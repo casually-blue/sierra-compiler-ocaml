@@ -19,7 +19,7 @@ let pmap
     'b parser_result
 = match (p input) with
         | Ok (result, rest) -> if_ok result rest
-        | Error (e, rest) -> if_error e rest
+        | Error (e, input) -> if_error e input
 
 (* carry the value through if it is an error and execute the function if it isnt *)
 let pmap_ok 
@@ -37,7 +37,7 @@ let pmap_error
 
 (* get a char from the string or error if at end *)
 let get_char s = (match (String.length s) with
-  | 0 -> error EndOfInputError ""
+  | 0 -> error EndOfInputError s
   | _ -> ok (String.get s 0) (String.sub s 1 ((String.length s) - 1)))
 
 (* check if a character from the input matches a predicate *)
@@ -47,10 +47,10 @@ let match_char f e s = pmap_ok get_char
     | false -> error e s) s
 
 (* match any char that doesn't fit a predicate *)
-let antimatch_char f e = pmap_ok get_char
+let antimatch_char f e s = pmap_ok get_char
   (fun r rest -> match (f r) with
     | false -> ok r rest
-    | true -> error e rest)
+    | true -> error e s) s
 
 let eof = pmap get_char
         (fun _ input -> error (ExpectationError "end of input") input)
@@ -65,7 +65,7 @@ let rec many1 p = pmap_ok p
   (fun r rest -> ( 
     pmap (many1 p) 
       (fun results rest -> Ok (r :: results, rest))
-      (fun _ _ -> Ok (r :: [], rest)) 
+      (fun _ input -> Ok (r :: [], input)) 
       rest
   ))
 
@@ -83,12 +83,15 @@ let (<+>) p1 p2 = pmap_ok p1
 (* execute one parser and if it fails execute the second on the same input *)
 let (<|>) p1 p2 = 
   (fun input_text -> pmap_error p1
-     (fun e1 rest1 -> pmap_error p2
-        (fun e2 rest2 -> (match (String.length input_text, String.length rest1, String.length rest2) with
-          | (i, f, _) when i == f -> (error e2 rest2)
-          | (i, _ , s) when i == s -> (error e1 rest1)
-          | (_, _, _) -> (error (ListError (e1, e2)) rest1)
-        )) input_text) input_text)
+     (fun e1 rest1 -> (match (String.length input_text, String.length rest1) with 
+        | (il, rl) when il == rl ->
+          (pmap_error p2
+            (fun e2 rest2 -> (match (String.length rest2) with
+              | rl when il == rl -> (error (ListError (e1, e2)) rest1)
+              | _ -> (error e2 rest2)
+            )) input_text)
+        | (_,_) -> (error e1 rest1)
+        )) input_text)
       
 
 (* execute a parser repeatedly with another parser in between each instance *)
@@ -110,7 +113,7 @@ let rec chainr1 p op = pmap_ok p
         (fun left rest -> pmap op
                 (fun oper rest -> pmap_ok (chainr1 p op)
                         (fun right rest -> Ok (oper left right, rest)) rest)
-                (fun _ _ -> Ok (left, rest)) rest)
+                (fun _ input -> Ok (left, input)) rest)
 
 (* maybe apply a parser to input *)
 let maybe p = pmap p
