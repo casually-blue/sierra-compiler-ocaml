@@ -1,1 +1,1 @@
-val program: Ast.expr Parserlib.Types.parser_f
+val program: Ast.expr option Parserlib.Types.parser_f

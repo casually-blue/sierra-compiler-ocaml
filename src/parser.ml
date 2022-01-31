@@ -20,8 +20,8 @@ let string_char = (escaped_char <|>
   (antimatch_char (fun c -> c == '"' || c == '\\') (ExpectationError "not quote")))
 
 (* parse a string literal*)
-let string_p = pmap_ok ((charp '"') <+> (many string_char) <+> (charp '"'))
-  (flatmap flatten3 (fun (_,scs,_) -> string (String.of_seq (List.to_seq scs))))
+let string_p = (pmap_ok ((charp '"') <+> (many string_char) <+> (charp '"'))
+  (flatmap flatten3 (fun (_,scs,_) -> string (String.of_seq (List.to_seq scs))))) <?> (ExpectationError "String literal")
 
 (* parse number *)
 let number_p = pmap_ok integer (ok_construct number)
@@ -39,16 +39,18 @@ let qualified_id_p s = chainl1
   ((pmap_ok identifier (ok_construct base)) <|> (pmap_ok (charp '*') (ok_ignore wildcard)))
   (pmap_ok (charp '.') (fun _ rest -> Ok((fun l r -> (qualified_id l r)), rest))) s
 
+let rec expression_nonlist_p s = ( string_p <|> expr_binary <|> function_p <|> import_p <|> binding_p <|> fncall_p ) s
+
 (* parse expressions separated by semicolons *)
-let rec expression_p s = (pmap_ok
+and expression_p s = (pmap_ok
   (sepBy 
     (remove_whitespace (charp ';')) 
-    (remove_whitespace ( string_p <|> expr_binary <|> function_p <|> import_p <|> binding_p <|> fncall_p )))
+    (remove_whitespace expression_nonlist_p))
   (ok_construct expr_list)) s
 
 (* parse a let binding of the form "let x = expression" *)
 and binding_p s = ((pmap_ok
-  ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_p)
+  ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_nonlist_p)
   (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp)))) <?> (ExpectationError "let binding")) s
 
 (* parse a function call of the form "name()" *)
@@ -63,12 +65,16 @@ and import_p s = ((pmap_ok
 
 (* parse a function of the form "fun name () { expression }" *)
 and function_p s = ((pmap_ok
-  ((keyword "fun") <-+> identifier <-+> (charp '(') <-+> (charp ')') <-+> (charp '{') <-+> expression_p <-+> (charp '}'))
-  (flatmap flatten7 (fun (_,name,_,_,_,expr,_) -> (func name expr)))) <?> (ExpectationError "Function definition")) s
+  ((keyword "fun") <-+> (charp '(') <-+> (charp ')') <-+> (charp '{') <-+> expression_p <-+> (charp '}'))
+  (flatmap flatten6 (fun (_,_,_,_,expr,_) -> (func expr)))) <?> (ExpectationError "Function definition")) s
 
 (* left-associative parse expressions *)
 and expr_binary s = binary_op (binary_op number_p term_oper binary) expr_oper binary s
 
 (* a program is just an expression followed by the end of input *)
-let program = pmap_ok (remove_whitespace (expression_p <-+> eof))
-  (flatmap flatten2 (fun (e, ()) -> e))
+let program = (pmap_ok
+  (remove_whitespace (expression_p) <-+> eof)
+  (flatmap flatten2 (fun (ex, _) -> Some ex))) <|>
+  (pmap_ok (remove_whitespace eof)
+    (fun _ rest -> ok None rest))
+

@@ -18,7 +18,7 @@ let repl () =
     (* prompt for a line *)
     match (prompt_line ">>> ") with
     (* parse and pretty print line *)
-    | Some line -> printf "%a\n%!" (pp_parser_result pp_expr) (program line)
+    | Some line -> printf "%a\n%!" (pp_parser_result (pp_print_option pp_expr)) (program line)
     (* at eof, set exit flag *)
     | None -> exiting := true
   done

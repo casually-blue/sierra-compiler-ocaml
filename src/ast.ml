@@ -19,7 +19,7 @@ type expr =
   | Number of int
   | Binary of op * expr * expr
   | ExprList of expr list
-  | Function of string * expr 
+  | Function of expr 
   | Import of qualified_id
   | Binding of string * expr
   | FnCall of string
@@ -30,13 +30,13 @@ type expr =
 let number n = Number n
 let binary op left right = Binary (op, left, right)
 let expr_list e = ExprList e
-let function_c name e = Function (name,e)
+let function_c e = Function e
 let binding s exp = Binding (s,exp)
 let import id = Import id
 let fncall name = FnCall name
 let string s = String s
 
-let func name block  = Function (name, block)
+let func block  = Function block
 
 let op_to_string o = match o with
   | Plus -> "+"
@@ -56,6 +56,6 @@ let rec expression_to_string expr = match expr with
   | ExprList [] -> ""
   | Binding (name,e) -> name ^ " = " ^ (expression_to_string e)
   | Import id -> "import: " ^ (qualified_id_to_string id)
-  | Function (name, expr) -> "Function: " ^ name ^ " -> \n" ^ (expression_to_string expr)
+  | Function (expr) -> "Function ->" ^ (expression_to_string expr)
   | FnCall name -> "calling: " ^ name
   | String s -> "String: " ^ s

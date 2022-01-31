@@ -41,10 +41,12 @@ let get_char s = (match (String.length s) with
   | _ -> ok (String.get s 0) (String.sub s 1 ((String.length s) - 1)))
 
 (* check if a character from the input matches a predicate *)
-let match_char f e s = pmap_ok get_char
+let match_char f e s = pmap get_char
   (fun r rest -> match (f r) with
     | true -> ok r rest
-    | false -> error e s) s
+    | false -> error e s)
+
+  (fun _ inp -> error e inp) s
 
 (* match any char that doesn't fit a predicate *)
 let antimatch_char f e s = pmap_ok get_char
@@ -54,7 +56,7 @@ let antimatch_char f e s = pmap_ok get_char
 
 let eof = pmap get_char
         (fun _ input -> error (ExpectationError "end of input") input)
-        (fun _ _ -> ok () "")
+        (fun _ inp -> ok () inp)
 
 
 (* parse a single specific character *)
@@ -122,6 +124,6 @@ let rec chainr1 p op = pmap_ok p
                 (fun _ input -> Ok (left, input)) rest)
 
 (* maybe apply a parser to input *)
-let maybe p = pmap p
+let maybe p s = pmap p
         (fun r rest -> Ok(Some r, rest))
-        (fun _ input -> Ok(None, input))
+        (fun _ _ -> Ok(None, s)) s
