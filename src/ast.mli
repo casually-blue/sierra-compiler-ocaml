@@ -3,8 +3,10 @@ type op =
   | Minus
   | Times
   | Divide
+  [@@deriving show]
 
 type qualified_id
+  [@@deriving show]
 
 val base: string -> qualified_id
 val wildcard: qualified_id
@@ -19,6 +21,7 @@ type expr =
   | Binding of string * expr
   | FnCall of string
   | String of string
+  [@@deriving show]
 
 val number: int -> expr
 val binary: op -> expr -> expr -> expr

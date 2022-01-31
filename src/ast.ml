@@ -3,11 +3,13 @@ type op =
   | Minus
   | Times
   | Divide
+  [@@deriving show]
 
 type qualified_id = 
   | Base of string
   | Wildcard
   | Qualified of qualified_id * qualified_id 
+  [@@deriving show]
 
 let base s = Base s
 let wildcard = Wildcard
@@ -22,6 +24,7 @@ type expr =
   | Binding of string * expr
   | FnCall of string
   | String of string
+  [@@deriving show]
 
 
 let number n = Number n

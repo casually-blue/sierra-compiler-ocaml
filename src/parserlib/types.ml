@@ -3,6 +3,7 @@ open Errors
 type 'parsed parser_result = 
   | Ok of 'parsed * string
   | Error of parser_error * string
+  [@@deriving show]
 
 (* a parser result of either a value and the rest of the input or a parser error *)
 (* type 'parsed parser_result = ('parsed * string, parser_error * string) result *)

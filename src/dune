@@ -1,4 +1,4 @@
 (executable
  (name scc)
- (libraries parserlib core)
- (preprocess (pps ppx_let)))
+ (libraries parserlib core fmt)
+ (preprocess (pps ppx_let ppx_deriving.show)))
