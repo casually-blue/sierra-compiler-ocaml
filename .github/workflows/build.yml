@@ -42,4 +42,7 @@ jobs:
         
       - name: Build project
         run: opam exec dune build
+        
+      - name: Test project
+        run: opam exec dune runtest
 
