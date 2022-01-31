@@ -83,8 +83,13 @@ let (<+>) p1 p2 = pmap_ok p1
 (* execute one parser and if it fails execute the second on the same input *)
 let (<|>) p1 p2 = 
   (fun input_text -> pmap_error p1
-     (fun e1 _ -> pmap_error p2
-        (fun e2 rest -> (error (ListError (e1,e2)) rest)) input_text) input_text)
+     (fun e1 rest1 -> pmap_error p2
+        (fun e2 rest2 -> (match (String.length input_text, String.length rest1, String.length rest2) with
+          | (i, f, _) when i == f -> (error e2 rest2)
+          | (i, _ , s) when i == s -> (error e1 rest1)
+          | (_, _, _) -> (error (ListError (e1, e2)) rest1)
+        )) input_text) input_text)
+      
 
 (* execute a parser repeatedly with another parser in between each instance *)
 let rec sepBy sep p = pmap_ok p
