@@ -7,15 +7,22 @@ let prompt_line prompt =
   input_line stdin
     ~fix_win_eol: true
 
-let print_pres pr = 
-  Format.printf "%a\n" (Parserlib.Types.pp_parser_result Ast.pp_expr) pr;
-  flush stdout
-
 (* REPL *)
-let repl () = let exiting = ref false in while (not !exiting) do
-  (* prompt for a line *)
-  match (prompt_line ">>> ") with
-  | Some line -> print_pres (Parser.program line)
-  | None -> exiting := true
-done
+let repl () = 
+  let exiting = ref false in 
+
+  let open Format in
+  let open Parserlib.Types in
+  let open Ast in
+  let open Parser in
+
+  while (not !exiting) do
+    (* prompt for a line *)
+    match (prompt_line ">>> ") with
+    (* parse and pretty print line *)
+    | Some line -> 
+      printf "%a\n" (pp_parser_result pp_expr) (program line);
+      flush stdout
+    | None -> exiting := true
+  done
 
