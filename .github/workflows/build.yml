@@ -24,25 +24,11 @@ jobs:
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-      
-      - name: Install Ocaml
-        run: sudo apt update && sudo apt install opam
-      
-      - name: Setup Opam
-        run: opam init
+      - uses: ocaml/setup-ocaml@v2
         
       - name: Install dune
-        run: opam install -y dune
-        
-      - name: Install Core
-        run: opam install -y core 
-      
-      - name: Install alcotest
-        run: opam install -y alcotest
-        
-      - name: Build project
-        run: opam exec dune build
+        run: opam install -y core alcotest
         
       - name: Test project
-        run: opam exec dune runtest
+        run: opam exec -- dune runtest
 
