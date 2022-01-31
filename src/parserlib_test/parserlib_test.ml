@@ -10,8 +10,10 @@ let parser_result_stringify ppf = function
 
 let parser_result_ttb = testable parser_result_stringify (=)
 
-let parser_expect_equal expected actual () = 
-  (check parser_result_ttb) "Expected values to be equal" expected actual
+let expect_equal ty expected actual () = 
+  (check ty) "Expected values to be equal" expected actual
+
+let parser_expect_equal = expect_equal parser_result_ttb
 
 let () =
   run "Parserlib Tests"
