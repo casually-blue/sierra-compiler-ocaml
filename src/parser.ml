@@ -39,7 +39,7 @@ let qualified_id_p s = chainl1
   ((pmap_ok identifier (ok_construct base)) <|> (pmap_ok (charp '*') (ok_ignore wildcard)))
   (pmap_ok (charp '.') (fun _ rest -> Ok((fun l r -> (qualified_id l r)), rest))) s
 
-let rec expression_nonlist_p s = ( string_p <|> expr_binary <|> function_p <|> import_p <|> binding_p <|> fncall_p ) s
+let rec expression_nonlist_p s = (( string_p <|> expr_binary <|> function_p <|> import_p <|> binding_p <|> fncall_p ) <?> (ExpectationError "Expression")) s
 
 (* parse expressions separated by semicolons *)
 and expression_p s = (pmap_ok
