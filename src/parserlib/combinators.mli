@@ -45,6 +45,8 @@ val (<+>): 'a parser_f -> 'b parser_f -> ('a * 'b) parser_f
 (* run one parser and then run another parser on the same input if it fails *)
 val (<|>): 'a parser_f -> 'a parser_f -> 'a parser_f
 
+val (<?>): 'a parser_f -> parser_error -> 'a parser_f
+
 (* match multiple occurences of a parser seperated by some other parser *)
 val sepBy: 'a parser_f -> 'b parser_f -> ('b list) parser_f
 

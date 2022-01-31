@@ -38,9 +38,9 @@ let char_list_to_number l = List.fold_left
 
 
 (* match a positive integer *)
-let integer = pmap_ok
+let integer = ((pmap_ok
         match_digits 
-        (ok_construct char_list_to_number)
+        (ok_construct char_list_to_number)) <?> (ExpectationError "Integer"))
 
 (* match an identifier that contains aphanumeric characters and possibly underscores *)
 let identifier = pmap

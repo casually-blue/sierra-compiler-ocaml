@@ -47,24 +47,24 @@ let rec expression_p s = (pmap_ok
   (ok_construct expr_list)) s
 
 (* parse a let binding of the form "let x = expression" *)
-and binding_p s = pmap_ok
+and binding_p s = ((pmap_ok
   ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_p)
-  (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp))) s
+  (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp)))) <?> (ExpectationError "let binding")) s
 
 (* parse a function call of the form "name()" *)
-and fncall_p s = pmap_ok
+and fncall_p s = ((pmap_ok
   (identifier <-+> (charp '(') <-+> (charp ')'))
-  (flatmap flatten3 (fun (name,_,_) -> (fncall name))) s
+  (flatmap flatten3 (fun (name,_,_) -> (fncall name)))) <?> (ExpectationError "function call")) s
 
 (* parse an import of the form "import name" *)
-and import_p s = pmap_ok
+and import_p s = ((pmap_ok
   ((keyword "import") <-+> qualified_id_p)
-  (flatmap flatten2 (fun (_, qid) -> (import qid))) s
+  (flatmap flatten2 (fun (_, qid) -> (import qid)))) <?> (ExpectationError "Import expression")) s
 
 (* parse a function of the form "fun name () { expression }" *)
-and function_p s = pmap_ok
+and function_p s = ((pmap_ok
   ((keyword "fun") <-+> identifier <-+> (charp '(') <-+> (charp ')') <-+> (charp '{') <-+> expression_p <-+> (charp '}'))
-  (flatmap flatten7 (fun (_,name,_,_,_,expr,_) -> (func name expr))) s
+  (flatmap flatten7 (fun (_,name,_,_,_,expr,_) -> (func name expr)))) <?> (ExpectationError "Function definition")) s
 
 (* left-associative parse expressions *)
 and expr_binary s = binary_op (binary_op number_p term_oper binary) expr_oper binary s

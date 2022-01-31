@@ -92,6 +92,12 @@ let (<|>) p1 p2 =
             )) input_text)
         | (_,_) -> (error e1 rest1)
         )) input_text)
+
+let (<?>) (p1: 'a parser_f) (euse: parser_error) input =
+  pmap_error p1
+    (fun e rest -> (match (String.length input, String.length rest) with
+      | (il, rl) when il == rl -> (error euse rest)
+      | _ -> error e rest)) input
       
 
 (* execute a parser repeatedly with another parser in between each instance *)
