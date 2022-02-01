@@ -3,7 +3,7 @@ open Command
 
 let main input _ () = 
   match input with
-    | "-" -> Repl.repl (); ()
+    | "-" -> Repl.repl ()
     | input -> print_endline ("Input file: " ^ input)
 
 let () = 

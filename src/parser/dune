@@ -1,0 +1,4 @@
+(library
+  (name parser)
+  (libraries ast parserlib)
+  (preprocess (pps ppx_deriving.show)))
