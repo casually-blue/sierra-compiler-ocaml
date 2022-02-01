@@ -23,7 +23,8 @@ and expression_list_p = function s -> (pmap_ok
 (* parse a let binding of the form "let x = expression" *)
 and binding_p = function s -> ((pmap_ok
   ((keyword "let") <-+> identifier <-+> (charp '=') <-+> expression_p)
-  (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp)))) <?> (ExpectationError "Let binding")) s
+  (flatmap flatten4 (fun (_,name,_,exp) -> (binding name exp)))) 
+  <?> (ExpectationError "Let binding")) s
 
 (* parse a function call of the form "name()" *)
 and fncall_p = function s -> ((pmap_ok

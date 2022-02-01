@@ -7,7 +7,7 @@ open Ast
 (* parse a string escape *)
 let escaped_char = pmap_ok ((charp '\\') <+> get_char )
   (fun (_,c) rest -> (match c with
-    | '\"' -> ok '\"' rest
+    | '"' -> ok '"' rest
     | 'n' -> ok '\n' rest
     | 't' -> ok '\t' rest
     | '\\' -> ok '\\' rest
