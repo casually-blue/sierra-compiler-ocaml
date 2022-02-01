@@ -16,6 +16,7 @@ let char_parser_expect_equal = expect_equal (parser_result_ttb Format.pp_print_c
 let pp_print_unit = (fun fmtr () -> Format.fprintf fmtr "()")
 
 let unit_parser_expect_equal = expect_equal (parser_result_ttb pp_print_unit)
+let char_list_parser_expect_equal = expect_equal (parser_result_ttb (Format.pp_print_list Format.pp_print_char))
 
 let quick_tcase ex_equal_fn name expected actual = 
   test_case ("test_" ^ name) `Quick (ex_equal_fn expected actual)
@@ -78,5 +79,42 @@ let () =
         tcase "a_with_rest"
           (ok 'a' "b")
           (match_a "ab")
+      ]);
+
+      ("basic many tests",
+      let tcase = quick_tcase char_list_parser_expect_equal in
+      let many_a = (many (charp 'a')) in [
+        tcase "no_a"
+          (ok [] "")
+          (many_a "");
+        tcase "one_a"
+          (ok ['a'] "")
+          (many_a "a");
+        tcase "multiple_a_then_b"
+          (ok ['a'; 'a'; 'a'] "b")
+          (many_a "aaab");
+        tcase "something_else_no_a"
+          (ok [] "bbb")
+          (many_a "bbb")
+      ]);
+
+      ("basic many1 tests",
+      let tcase = quick_tcase char_list_parser_expect_equal in
+      let many1_a = (many1 (charp 'a')) in [
+        tcase "no_a"
+          (error (ExpectationError "a") "")
+          (many1_a "");
+        tcase "one_a"
+          (ok ['a'] "")
+          (many1_a "a");
+        tcase "multi_a"
+          (ok ['a'; 'a'; 'a'; 'a'] "")
+          (many1_a "aaaa");
+        tcase "multi_a_then_b"
+          (ok ['a'; 'a'; 'a'; 'a'] "bbb")
+          (many1_a "aaaabbb");
+        tcase "no_a_then_b"
+          (error (ExpectationError "a") "bbb")
+          (many1_a "bbb")
       ])
     ]
