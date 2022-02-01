@@ -22,5 +22,5 @@ let string_of_list l = Stdlib.String.of_seq (List.to_seq l)
 
 (* parse a string literal*)
 let string_p = (pmap_ok ((charp '"') <+> (many string_char) <+> (charp '"'))
-  (flatmap flatten3 (fun (_,scs,_) -> string (string_of_list scs))) <?> (ExpectationError "String literal")
+  (flatmap flatten3 (fun (_,scs,_) -> string (string_of_list scs)))) <?> (ExpectationError "String literal")
 
