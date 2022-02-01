@@ -4,7 +4,7 @@ open Parserlib.Tuple
 
 open Expression
 
-(* a program is just an expression followed by the end of input *)
+(* a program is just an expression followed by the end of input or potential just some whitespace and then eoi *)
 let program = 
   (pmap_ok
     (remove_whitespace (expression_list_p) <-+> eof)
