@@ -54,9 +54,9 @@ let antimatch_char f e s = pmap_ok get_char
     | false -> ok r rest
     | true -> error e s) s
 
-let eof = pmap get_char
-        (fun _ input -> error (ExpectationError "end of input") input)
-        (fun _ inp -> ok () inp)
+let eof s = pmap get_char
+        (fun _ _ -> error (ExpectationError "end of input") s)
+        (fun _ inp -> ok () inp) s
 
 
 (* parse a single specific character *)
@@ -67,8 +67,10 @@ let rec many1 p = pmap_ok p
   (fun r rest -> ( 
     pmap (many1 p) 
       (fun results rest -> Ok (r :: results, rest))
-      (fun _ input -> Ok (r :: [], input)) 
-      rest
+      (fun e input -> (match (String.length rest, String.length input) with 
+        | (rl, il) when rl == il -> Ok (r :: [], input)
+        | _ -> error e input
+      )) rest
   ))
 
 
