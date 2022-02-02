@@ -10,17 +10,7 @@ let () =
     [
       ("get_char tests", Get_char_tests.get_char_tests);
       ("match_char tests", Match_char_tests.match_char_tests);
-
-      ("antimatch_char tests",
-      let tcase = quick_tcase char_parser_expect_equal in
-      let antimatch_b = (antimatch_char ((=) 'b') (ExpectationError "not b")) in [
-        tcase "nomatch_a"
-          (ok 'a' "b")
-          (antimatch_b "ab");
-        tcase "nomatch_a_error"
-          (error (ExpectationError "not b") "bb")
-          (antimatch_b "bb")
-      ]);
+      ("antimatch_char tests", Antimatch_char_tests.antimatch_char_tests);
 
       ("eof tests",
       let tcase = quick_tcase unit_parser_expect_equal in [
