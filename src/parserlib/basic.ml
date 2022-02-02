@@ -32,7 +32,7 @@ let char_to_number c = (Char.code c) - (Char.code '0')
 
 (* fold a list of numbers into a single number *)
 let char_list_to_number l = List.fold_left 
-                                (fun x y -> (x * 10 + y )) 
+                                (fun x -> ((+) (x * 10)))
                                 0 
                                 (List.map char_to_number l)
 
