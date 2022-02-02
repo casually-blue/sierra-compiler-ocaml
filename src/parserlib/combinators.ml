@@ -18,8 +18,8 @@ let pmap
   (input: string): 
     'b parser_result
 = match (p input) with
-        | Ok (result, rest) -> if_ok result rest
-        | Error (e, input) -> if_error e input
+        | Types.Ok (result, rest) -> if_ok result rest
+        | Types.Error (e, input) -> if_error e input
 
 (* carry the value through if it is an error and execute the function if it isnt *)
 let pmap_ok 
@@ -66,9 +66,9 @@ let charp c = match_char ((==) c) (ExpectationError (String.make 1 c))
 let rec many1 p = pmap_ok p 
   (fun r rest -> ( 
     pmap (many1 p) 
-      (fun results rest -> Ok (r :: results, rest))
+      (fun results rest -> Types.Ok (r :: results, rest))
       (fun e input -> (match (String.length rest, String.length input) with 
-        | (rl, il) when rl == il -> Ok (r :: [], input)
+        | (rl, il) when rl == il -> Types.Ok (r :: [], input)
         | _ -> error e input
       )) rest
   ))
@@ -80,7 +80,7 @@ let many p s = pmap_error (many1 p) (fun e _ -> (ok_ignore []) e s) s
 (* chain two parsers together *)
 let (<+>) p1 p2 = pmap_ok p1 
         (fun r1 rest -> pmap_ok p2
-                (fun r2 rest -> Ok ((r1,r2), rest)) rest)
+                (fun r2 rest -> Types.Ok ((r1,r2), rest)) rest)
 
 
 
@@ -122,10 +122,10 @@ and chain_rest p op a = pmap op
 let rec chainr1 p op = pmap_ok p
         (fun left rest -> pmap op
                 (fun oper rest -> pmap_ok (chainr1 p op)
-                        (fun right rest -> Ok (oper left right, rest)) rest)
-                (fun _ input -> Ok (left, input)) rest)
+                        (fun right rest -> Types.Ok (oper left right, rest)) rest)
+                (fun _ input -> Types.Ok (left, input)) rest)
 
 (* maybe apply a parser to input *)
 let maybe p s = pmap p
-        (fun r rest -> Ok(Some r, rest))
-        (fun _ _ -> Ok(None, s)) s
+        (fun r rest -> Types.Ok(Some r, rest))
+        (fun _ _ -> Types.Ok(None, s)) s

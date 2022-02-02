@@ -1,3 +1,9 @@
+(env
+  (dev
+    (flags (:standard -w +a )))
+  (release
+    (ocamlopt_flags (:standard -O3))))
+
 (executable
  (name scc)
  (libraries parser ast parserlib core fmt)

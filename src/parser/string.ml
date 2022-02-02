@@ -1,6 +1,7 @@
 open Parserlib.Types
 open Parserlib.Combinators
 open Parserlib.Tuple
+open Parserlib.Errors
 
 open Ast
 

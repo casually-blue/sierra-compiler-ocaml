@@ -1,5 +1,6 @@
 open Parserlib.Combinators
 open Parserlib.Types
+open Parserlib.Errors
 
 
 open Scaffold

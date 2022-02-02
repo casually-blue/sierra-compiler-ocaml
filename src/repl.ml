@@ -1,15 +1,11 @@
-open Format
-open Fmt
-
 open Parserlib.Types
 
 open Ast
 open Parser
 
 let prompt_line prompt = 
-  let open Core.In_channel in
-  fprintf stderr "%s%!" prompt;
-  input_line stdin
+  Format.fprintf Fmt.stderr "%s%!" prompt;
+  Core.In_channel.input_line Core.In_channel.stdin
 
 (* REPL *)
 let repl () = 
@@ -18,7 +14,7 @@ let repl () =
     (* prompt for a line *)
     match (prompt_line ">>> ") with
     (* parse and pretty print line *)
-    | Some line -> printf "%a\n%!" (pp_parser_result (pp_print_option pp_expr)) (program line)
+    | Some line -> Format.printf "%a\n%!" (pp_parser_result (Format.pp_print_option pp_expr)) (program line)
     (* at eof, set exit flag *)
     | None -> exiting := true
   done
