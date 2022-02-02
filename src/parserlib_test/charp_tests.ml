@@ -7,7 +7,7 @@ open Scaffold
 let tcase = quick_tcase char_parser_expect_equal
 let match_a = (charp 'a') 
 
-let qtest = QCheck.Test.make ~count:1000
+let qtest = QCheck.Test.make ~count:4000
     ~name:"charp only correct match"
     QCheck.((pair char char))
     (fun (c,d) -> (if c=d then 
@@ -15,7 +15,7 @@ let qtest = QCheck.Test.make ~count:1000
     else 
       (charp c) (String.make 1 d) = (error (ExpectationError (String.make 1 c)) (String.make 1 d))));;
 
-let qtest_more = QCheck.Test.make ~count:1000
+let qtest_more = QCheck.Test.make ~count:4000
   ~name:"charp then other"
   QCheck.(pair char string)
   (fun (c, s) -> 
