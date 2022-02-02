@@ -21,9 +21,10 @@ let match_alnum = match_digit <|> match_alpha
 let whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
 
 (* execute a parser after ignoring whitespace *)
-let remove_whitespace p = pmap_ok
-        (whitespace <+> p) 
-        (fun (_, result) rest -> (ok result rest))
+let remove_whitespace p s = pmap_ok whitespace
+  (fun _ rest -> (pmap p
+    (fun result rest -> (ok result rest))
+    (fun e _ -> (error e s)) rest)) s
 
 let (<-+>) p1 p2 = p1 <+> (remove_whitespace p2)
 
