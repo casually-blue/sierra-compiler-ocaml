@@ -27,7 +27,7 @@ jobs:
       - uses: ocaml/setup-ocaml@v2
         
       - name: Install dune
-        run: opam install -y core alcotest ppx_deriving ppx_let 
+        run: opam install -y core alcotest ppx_deriving ppx_let qcheck qcheck-alcotest
         
       - name: Test project
         run: opam exec -- dune runtest
