@@ -3,51 +3,13 @@ open Parserlib.Errors
 open Parserlib.Combinators
 
 open Alcotest
-
-let parser_result_ttb pretty_printer = testable 
-  (fun pftr -> Format.fprintf pftr "%a" (pp_parser_result pretty_printer))
-  (=)
-
-let expect_equal ty expected actual () = 
-  (check ty) "Expected values to be equal" expected actual
-
-let char_parser_expect_equal = expect_equal (parser_result_ttb Format.pp_print_char)
-
-let pp_print_unit = (fun fmtr () -> Format.fprintf fmtr "()")
-
-let unit_parser_expect_equal = expect_equal (parser_result_ttb pp_print_unit)
-let char_list_parser_expect_equal = expect_equal (parser_result_ttb (Format.pp_print_list Format.pp_print_char))
-
-let quick_tcase ex_equal_fn name expected actual = 
-  test_case ("test_" ^ name) `Quick (ex_equal_fn expected actual)
+open Scaffold 
 
 let () =
   run "Parserlib Tests"
     [
-
-      ("get_char tests",
-      let tcase = quick_tcase char_parser_expect_equal in [
-        tcase "single_char"
-          (ok 'a' "b")
-          (get_char "ab");
-        tcase "no_char"
-          (error (EndOfInputError) "")
-          (get_char "");
-        tcase "only_one_char"
-          (ok 'a' "") 
-          (get_char "a")
-      ]);
-
-      ("match_char tests",
-      let tcase = quick_tcase char_parser_expect_equal in 
-      let match_a = (match_char ((=) 'a') (ExpectationError "a")) in [
-        tcase "match_a" 
-          (ok 'a' "b")
-          (match_a "ab");
-        tcase "error_a"
-          (error (ExpectationError "a") "bb")
-          (match_a "bb")
-      ]);
+      ("get_char tests", Get_char_tests.get_char_tests);
+      ("match_char tests", Match_char_tests.match_char_tests);
 
       ("antimatch_char tests",
       let tcase = quick_tcase char_parser_expect_equal in
