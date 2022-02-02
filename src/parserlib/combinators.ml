@@ -67,11 +67,9 @@ let rec many1 p = pmap_ok p
   (fun r rest -> ( 
     pmap (many1 p) 
       (fun results rest -> Types.Ok (r :: results, rest))
-      (fun e input -> (match (String.length rest, String.length input) with 
-        | (rl, il) when rl == il -> Types.Ok (r :: [], input)
-        | _ -> error e input
-      )) rest
-  ))
+      
+      (fun _ _ -> Types.Ok (r :: [], rest))) rest
+  )
 
 
 (* repeat a given parser *)

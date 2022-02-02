@@ -23,7 +23,7 @@ let whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
 (* execute a parser after ignoring whitespace *)
 let remove_whitespace p = pmap_ok
         (whitespace <+> p) 
-        (fun (_, result) rest -> (ok result rest))
+        (fun (_, result) rest -> print_endline "removed ws"; (ok result rest))
 
 let (<-+>) p1 p2 = p1 <+> (remove_whitespace p2)
 
@@ -38,16 +38,15 @@ let char_list_to_number l = List.fold_left
 
 
 (* match a positive integer *)
-let integer = ((pmap_ok
+let integer = (pmap_ok
         match_digits 
-        (ok_construct char_list_to_number)) <?> (ExpectationError "Integer"))
+        (ok_construct char_list_to_number)) <?> (ExpectationError "Integer")
 
 (* match an identifier that contains aphanumeric characters and possibly underscores *)
-let identifier = pmap
+let identifier = (pmap_ok
         (match_alpha <+> (many match_alnum))
         (ok_construct (
-                fun (first, rest) -> ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)))))
-        (fun _ input -> (error (ExpectationError "identifier") input))
+                fun (first, rest) -> ((String.make 1 first) ^ (String.of_seq (List.to_seq rest)))))) <?> (ExpectationError "Identifier")
 
 (* match a keyword *)
 let keyword k s = pmap

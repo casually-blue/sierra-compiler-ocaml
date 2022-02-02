@@ -10,5 +10,6 @@ let () =
       ("eof tests", EOF_tests.eof_tests);
       ("charp tests", Charp_tests.charp_tests);
       ("basic many tests", Many_tests.many_tests);
-      ("basic many1 tests", Many1_tests.many1_tests)
+      ("basic many1 tests", Many1_tests.many1_tests);
+      ("complex many tests", Complex_many_tests.complex_many_tests)
     ]
