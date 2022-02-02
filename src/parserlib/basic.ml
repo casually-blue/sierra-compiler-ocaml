@@ -23,7 +23,7 @@ let whitespace = many (match_char is_whitespace (ExpectationError "whitespace"))
 (* execute a parser after ignoring whitespace *)
 let remove_whitespace p = pmap_ok
         (whitespace <+> p) 
-        (fun (_, result) rest -> print_endline "removed ws"; (ok result rest))
+        (fun (_, result) rest -> (ok result rest))
 
 let (<-+>) p1 p2 = p1 <+> (remove_whitespace p2)
 
