@@ -2,7 +2,6 @@ open Parserlib.Combinators
 open Parserlib.Types
 open Parserlib.Errors
 
-
 open Scaffold
 
 let tcase = quick_tcase char_parser_expect_equal
