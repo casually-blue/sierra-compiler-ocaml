@@ -18,4 +18,3 @@ let repl () =
     (* at eof, set exit flag *)
     | None -> exiting := true
   done
-
