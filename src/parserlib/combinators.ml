@@ -68,12 +68,16 @@ let rec many1 p = pmap_ok p
     pmap (many1 p) 
       (fun results rest -> Types.Ok (r :: results, rest))
       
-      (fun _ _ -> Types.Ok (r :: [], rest))) rest
+      (fun e input -> (match (String.length rest, String.length input) with 
+        | (rl, il) when rl=il -> Types.Ok (r :: [], rest)
+        | _ -> error e rest)) rest)
   )
 
 
 (* repeat a given parser *)
-let many p s = pmap_error (many1 p) (fun e _ -> (ok_ignore []) e s) s
+let many p s = pmap_error (many1 p) (fun e input -> (match (String.length input, String.length s) with 
+  | (il,sl) when il=sl -> (ok_ignore []) e s
+  | _ -> error e input)) s
 
 (* chain two parsers together *)
 let (<+>) p1 p2 = pmap_ok p1 
@@ -89,10 +93,10 @@ let (<|>) p1 p2 =
         | (il, rl) when il == rl ->
           (pmap_error p2
             (fun e2 rest2 -> (match (String.length rest2) with
-              | rl when il == rl -> (error (ListError (e1, e2)) rest1)
+              | rl2 when il == rl && il == rl2 -> (error (ListError (e1, e2)) input_text)
               | _ -> (error e2 rest2)
             )) input_text)
-        | (_,_) -> (error e1 rest1)
+        | _ -> (error e1 rest1)
         )) input_text)
 
 let (<?>) (p1: 'a parser_f) (euse: parser_error) input =
